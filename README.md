@@ -2,7 +2,7 @@
 
 A free, open-source desktop overlay for **The Isle: Evrima**, built by the Ferrosaur community server.
 
-Ferrosaur is a rebrand of the original BlackFossil Overlay, created by **[@HidekiSensei](https://github.com/HidekiSensei)**.
+Ferrosaur, created by **FERROSAUR445**.
 
 ## Features
 
