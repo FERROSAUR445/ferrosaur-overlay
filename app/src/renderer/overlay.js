@@ -7939,7 +7939,8 @@ async function connect({ token, url }) {
 async function toggleConnect() {
   if (room) { await room.disconnect(); room = null; micEnabled = false; voiceConnected = false; el('connBtn').textContent = 'Verbinden'; setMicState('disconnected'); setMicBtn(); updateVoiceWarn(); }
   else {
-    if (!me) { showToast('Voice nur auf dem Ferrosaur-Server verfügbar', 'error'); return; }
+    // Server-Gating (nur bei Positions-Bestätigung "auf dem Server") temporär deaktiviert -
+    // es gibt noch keine Live-Positionsdaten vom Gameserver. Voice geht daher ohne Nahfeld-Logik.
     const s = await window.bf.getSession(); if (s) connectWithSession(s);
   }
 }
