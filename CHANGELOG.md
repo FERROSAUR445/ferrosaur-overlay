@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+## v1.11.3 — Voice-Chat freigeschaltet
+
+### ✨ Neu
+
+- Voice-Chat funktioniert jetzt auch ohne Live-Positionsdaten vom Spielserver.
+
 ## v1.11.2 — Umstieg auf das neue HUD 🦖
 
 ### ✨ Neu
