@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Ferrosaur Overlay</title>
+  <link rel="stylesheet" href="styles/app.css" />
+</head>
+<body>
+  <!-- Voice-Debug (F9): Distanz/Gain/Pan je Sprecher zum Tunen von Reichweite & 3D -->
+  <div id="voiceDbg" style="display:none;position:fixed;top:6px;left:6px;z-index:99999;font:11px/1.35 ui-monospace,Menlo,Consolas,monospace;white-space:pre;color:#9effa0;background:rgba(0,0,0,0.72);border:1px solid #2f7d32;border-radius:6px;padding:6px 8px;pointer-events:none;max-width:60vw"></div>
+  <!-- Dienst-Modus-Indikator: pinker Rand-Glow um den ganzen Screen (nur sichtbar wenn on duty) -->
+  <div id="dutyGlow"></div>
+  <!-- Globaler Blitz-Filter: verzerrt Rahmen-Linien zu gezackten, flackernden Blitzen (wie im Logo) -->
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute;pointer-events:none">
+    <defs>
+      <filter id="bf-lightning" x="-35%" y="-35%" width="170%" height="170%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="2" result="bfNoise">
+          <animate attributeName="seed" values="1;9;3;12;1" dur="2.6s" repeatCount="indefinite"/>
+          <animate attributeName="baseFrequency" values="0.018;0.032;0.018" dur="5s" repeatCount="indefinite"/>
+        </feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="bfNoise" scale="11" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Logo oben links (transparentes PNG), nur wenn Dock offen -->
+  <img id="logoFx" src="assets/logo.png" alt="Ferrosaur">
+
+  <!-- Part 3b: Lebensanzeige — Kreis mit Herz, füllt/leert sich nach HP. Permanent, verschiebbar + skalierbar -->
+  <div id="hudHeart" title="Grow · Grow-Rate · HP">
+    <svg viewBox="0 0 190 190" aria-hidden="true">
+      <defs>
+        <linearGradient id="ghGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
+          <stop id="ghE1" offset="1" stop-color="rgba(255,255,255,0.10)"/>
+          <stop id="ghF1" offset="1" stop-color="#ef4444"/>
+          <stop id="ghF2" offset="1" stop-color="#ef4444"/>
+        </linearGradient>
+        <linearGradient id="grGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
+          <stop id="grE1" offset="1" stop-color="rgba(255,255,255,0.10)"/>
+          <stop id="grF1" offset="1" stop-color="#e7cf7a"/>
+          <stop id="grF2" offset="1" stop-color="#e7cf7a"/>
+        </linearGradient>
+        <linearGradient id="ggGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
+          <stop id="ggE1" offset="1" stop-color="rgba(255,255,255,0.10)"/>
+          <stop id="ggF1" offset="1" stop-color="#8fae54"/>
+          <stop id="ggF2" offset="1" stop-color="#8fae54"/>
+        </linearGradient>
+      </defs>
+      <!-- HP (oben mittig) -->
+      <polygon points="95,14 134.8,37 134.8,83 95,106 55.2,83 55.2,37" fill="rgba(8,5,18,0.55)"/>
+      <polygon points="95,14 134.8,37 134.8,83 95,106 55.2,83 55.2,37" fill="url(#ghGrad)"/>
+      <polygon points="95,14 134.8,37 134.8,83 95,106 55.2,83 55.2,37" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
+      <text id="heartVal" x="95" y="63" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">—</text>
+      <text x="95" y="81" text-anchor="middle" font-size="8.5" font-weight="700" fill="#f3d6d2" letter-spacing="1.5">HP</text>
+      <!-- GROW-RATE (unten links) -->
+      <polygon points="55.2,83 95,106 95,152 55.2,175 15.4,152 15.4,106" fill="rgba(8,5,18,0.55)"/>
+      <polygon points="55.2,83 95,106 95,152 55.2,175 15.4,152 15.4,106" fill="url(#grGrad)"/>
+      <polygon points="55.2,83 95,106 95,152 55.2,175 15.4,152 15.4,106" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
+      <text id="rateVal" x="55.2" y="132" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
+      <text x="55.2" y="149" text-anchor="middle" font-size="7.5" font-weight="700" fill="#e9e0c4" letter-spacing="0.3">RATE</text>
+      <!-- GROW (unten rechts) -->
+      <polygon points="134.8,83 174.6,106 174.6,152 134.8,175 95,152 95,106" fill="rgba(8,5,18,0.55)"/>
+      <polygon points="134.8,83 174.6,106 174.6,152 134.8,175 95,152 95,106" fill="url(#ggGrad)"/>
+      <polygon points="134.8,83 174.6,106 174.6,152 134.8,175 95,152 95,106" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
+      <text id="growVal" x="134.8" y="132" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">—</text>
+      <text x="134.8" y="150" text-anchor="middle" font-size="8" font-weight="700" fill="#e9e0c4" letter-spacing="1">GROW</text>
+    </svg>
+  </div>
+
+  <!-- Edit-Mode-Banner -->
+  <div id="editBanner">🎨 Edit-Mode aktiv — Panels ziehen, Position wird gespeichert <button id="editResetBtn">Reset</button><button id="editDoneBtn">Fertig</button></div>
+
+  <!-- Top-HUD -->
+  <div id="hud">
+    <img id="hudAvatar" alt="" style="display:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--accent);object-fit:cover;vertical-align:middle">
+    <span id="hudVoice" class="hud-dot"></span>
+    <span id="hudName">…</span>
+    <span id="hudStaff" class="staff-badge" style="display:none"></span>
+    <span id="hudTier" class="tier-badge">Fossil</span>
+    <span id="hudPoints">— Pkt.</span>
+  </div>
+
+  <!-- Grow-Boost/Stop-Timer (nur sichtbar, wenn aktiv) -->
+  <div id="growTimer">
+    <div class="gt-head"><span id="gtIcon">📈</span><span id="gtLabel" class="gt-label">Grow-Boost</span><span id="gtTime" class="gt-time">--:--</span></div>
+    <div class="gt-track"><div id="gtFill" class="gt-fill"></div></div>
+  </div>
+
+  <!-- Event-Timer (nur sichtbar, wenn ein Event aktiv ist) — default links, mittig -->
+  <div id="eventPanel"></div>
+
+  <!-- Wander-Distanz-HUD: plopt auf, wenn gerade Distanz dazukommt; zeigt aktuelle Lauf/Schwimm/Flug-Distanz -->
+  <div id="distHud"></div>
+
+  <!-- Paten-Rückkehr-Teleport: nur sichtbar, solange ein Pate in der Patenzone ein unbenutztes Rückkehr-Grant hat -->
+  <div id="patenReturnHud" style="display:none">
+    <button id="patenReturnBtn" class="pr-btn">↩️ Zurück zur vorherigen Position</button>
+  </div>
+
+  <!-- Toast-Container -->
+  <div id="toasts"></div>
+
+  <!-- Kompass (verschiebbarer Balken oben): Himmelsrichtungen + Wegpunkt + Gruppe + Golden-Zone, Mitte = Blickrichtung -->
+  <div id="compassWrap" style="position:fixed;top:10px;z-index:36"><canvas id="compass" width="480" height="46"></canvas></div>
+
+  <!-- Minimap + Mikro -->
+  <!-- Part 3: Minimap (verschiebbar + skalierbar) -->
+  <div id="minimapWrap">
+    <canvas id="minimap" width="200" height="200"></canvas>
+    <div id="minimapRing"></div>
+  </div>
+  <!-- Part 4: Info-Boxen unter der Minimap (entkoppelt verschiebbar + skalierbar) -->
+  <div id="hudInfo">
+    <div id="micIndicator"><span id="micIcon" class="mic-connecting"></span><span id="micText">Verbinde…</span></div>
+    <div id="connInd" title="Voice-Verbindung. Gelb/Rot oder ⚠️ Relay = schlechte Verbindung → LAN statt WLAN, VPN aus." style="display:none;align-items:center;gap:7px;justify-content:center;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:6px 10px;font-size:12px;box-shadow:var(--glow)"><span id="connDot" style="width:9px;height:9px;border-radius:50%;background:#666;flex:none"></span><span id="connText" style="color:var(--muted)">—</span></div>
+    <div id="rangeBox" style="text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:6px 10px;font-size:12px">🔊 Reichweite: 10 m</div>
+    <div id="zoneBox">Zone: —</div>
+    <div id="speakingBox" style="display:none;text-align:center;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:6px 10px;font-size:12px;box-shadow:var(--glow);line-height:1.35"></div>
+  </div>
+
+  <!-- Große Map: Teleport-Panel links | Karte mittig | rechts Ansichten + Gruppe -->
+  <div id="bigMap">
+    <div id="mapRow">
+
+      <!-- Panel 1: Teleport-Punkte (links neben der Karte) -->
+      <div id="tpList" class="map-panel">
+        <div style="font-weight:700;margin-bottom:6px">📍 Teleport-Punkte</div>
+        <div id="tpListItems"><div style="color:var(--muted)">Keine Punkte.</div></div>
+      </div>
+
+      <div style="position:relative">
+      <canvas id="bigMapCanvas" width="1000" height="1000"></canvas>
+      <!-- Map-Attribution / Disclaimer (RaidAtlas) — unten rechts, Klick öffnet raidatlas.app -->
+      <div id="mapAttribution" title="Karte bereitgestellt von RaidAtlas — Website öffnen">
+        <img src="assets/raidatlas-logo.png" alt="RaidAtlas Interactive Maps" draggable="false">
+      </div>
+      <button id="calibBtn" style="display:none;position:absolute;top:12px;left:12px;width:auto;padding:8px 14px;
+        background:var(--panel);border:1px solid var(--border);color:#eee;border-radius:8px;
+        font-size:13px;font-weight:600;cursor:pointer">🔧 Kalibrieren</button>
+      <button id="zoneBtn" style="display:none;position:absolute;top:12px;left:158px;width:auto;padding:8px 14px;
+        background:var(--panel);border:1px solid var(--border);color:#eee;border-radius:8px;
+        font-size:13px;font-weight:600;cursor:pointer">📐 Zonen</button>
+
+      <!-- Zonen-Aufnahme-Panel (mehrere benannte Zonen) -->
+      <div id="zonePanel" style="display:none;position:absolute;top:56px;right:12px;width:290px;
+        background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:12px">
+        <div style="font-weight:700;margin-bottom:6px">📐 Zonen verwalten</div>
+        <div style="color:var(--muted);margin-bottom:10px;line-height:1.4">
+          Typ wählen → <b>Neue Zone</b> → im Spiel die Form abfliegen → an jeder Ecke <b>F6</b> drücken.
+          Reihenfolge = Umrandung. Dann für alle speichern.</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <select id="zoneTypeSel" style="flex:1;padding:7px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:#eee;cursor:pointer">
+            <option value="pvp">PvP</option>
+            <option value="pve">PvE</option>
+            <option value="sanctuary">Sanctuary</option>
+            <option value="patrol">Patrol</option>
+            <option value="migration">Migration</option>
+          </select>
+          <button id="zoneNewBtn" style="width:auto;padding:8px 10px;border-radius:6px;border:0;background:var(--accent);color:#fff;font-weight:600;cursor:pointer">＋ Neue Zone</button>
+        </div>
+        <div id="zoneList" style="max-height:180px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:4px"></div>
+        <input id="zoneName" placeholder="Name (optional)" style="width:100%;box-sizing:border-box;padding:7px;margin-bottom:8px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:#eee;font-size:12px">
+        <div id="zoneInfo" style="color:var(--muted);margin-bottom:8px">Keine Zone gewählt</div>
+        <div style="display:flex;gap:6px">
+          <button id="zoneAddBtn" style="flex:1;padding:8px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer">＋ Punkt (F6)</button>
+          <button id="zoneUndoBtn" style="width:auto;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer">↶</button>
+          <button id="zoneClearBtn" style="width:auto;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer">🗑</button>
+        </div>
+        <button id="zonePullBtn" style="width:100%;margin-top:8px;padding:8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#eee;cursor:pointer" title="Von anderen gespeicherte Zonen dazuholen, ohne deine ungespeicherten zu verlieren">🔄 Aktuelle Zonen laden</button>
+        <button id="zoneSaveBtn" style="width:100%;margin-top:6px;padding:9px;border-radius:6px;border:0;background:#22c55e;color:#fff;font-weight:600;cursor:pointer">💾 Speichern (für alle)</button>
+      </div>
+
+      <!-- Kalibrierungs-Panel -->
+      <div id="calibPanel" style="display:none;position:absolute;top:56px;left:12px;width:280px;
+        background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:12px">
+        <div style="font-weight:700;margin-bottom:6px">🔧 Kalibrierung</div>
+        <div style="color:var(--muted);margin-bottom:10px;line-height:1.4">
+          Am besten <b>deine eigene Position</b> an <b>3-4 weit entfernten</b> Orten:
+          hinstellen → 👤 dich wählen → auf der Karte dort klicken. Punkte weit verteilen,
+          keine Zonen-Ecken (liegen zu dicht).</div>
+        <div id="calibRefs" style="max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:4px"></div>
+        <div id="calibCount" style="margin-top:8px;color:var(--muted)">0 Punkte gesetzt</div>
+        <div id="calibSetList" style="margin-top:6px;display:flex;flex-direction:column;gap:3px;max-height:96px;overflow:auto"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button id="calibSolve" style="flex:1;padding:8px;font-size:12px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer">Berechnen</button>
+          <button id="calibReset" style="flex:1;padding:8px;font-size:12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer">Reset</button>
+        </div>
+      </div>
+      <!-- Admin-Panel ist jetzt ein eigenständiges Modal (siehe #adminPanel unten) -->
+
+      <!-- TP-Bestätigung -->
+      <div id="tpConfirm" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5;background:rgba(15,10,30,0.98);border:1px solid var(--accent);border-radius:12px;padding:18px;font-size:14px;text-align:center;box-shadow:var(--glow);min-width:270px">
+        <div id="tpConfirmText" style="margin-bottom:14px">Teleportieren?</div>
+        <div style="display:flex;gap:8px">
+          <button id="tpConfirmYes" style="flex:1">✅ Teleportieren</button>
+          <button id="tpConfirmNo" class="secondary" style="flex:1">Abbrechen</button>
+        </div>
+      </div>
+      </div><!-- /Karten-Wrapper -->
+
+      <!-- Rechte Spalte: Panel 2 (Ansichten & Steuerung) + Panel 3 (Gruppe) -->
+      <div id="mapRight">
+        <div id="mapViews" class="map-panel">
+          <div style="font-weight:700;margin-bottom:8px">🗺️ Ansichten</div>
+          <button id="heatBtn" class="map-viewbtn">🔥 Heatmap</button>
+          <div id="zoneLayers" style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+            <button id="zlSanctuary" class="map-viewbtn">🛡️ Sanctuary</button>
+            <button id="zlPatrol" class="map-viewbtn">🐾 Patrol</button>
+            <button id="zlMigration" class="map-viewbtn">🧭 Migration</button>
+          </div>
+          <button id="aiEncBtn" class="map-viewbtn" style="display:none;margin-top:6px;color:#fca5a5">🦖 KI-Dinos (Spawns/Patrouillen)</button>
+          <div style="height:1px;background:var(--border);margin:10px 0"></div>
+          <div style="font-weight:700;margin-bottom:8px">🎯 Steuerung</div>
+          <button id="centerBtn" class="map-viewbtn">⌖ Auf mich zentrieren</button>
+          <button id="resetViewBtn" class="map-viewbtn" style="color:var(--muted)">↺ Ansicht zurücksetzen</button>
+          <button id="clearWpBtn" class="map-viewbtn" style="color:#fbbf24">🚩 Wegpunkt löschen</button>
+        </div>
+        <div id="mapGroup" class="map-panel"></div>
+      </div>
+
+    </div><!-- /#mapRow -->
+    <div class="hint">M schließen · Mausrad = Zoom · Ziehen = verschieben · Klick = Wegpunkt</div>
+  </div>
+
+  <!-- Settings -->
+  <div id="settings" class="wide">
+    <h2>⚙️ Einstellungen</h2>
+    <div class="admin-tabs" id="settingsTabs">
+      <button data-sttab="audio">🎙️ Audio</button>
+      <button data-sttab="keys" class="secondary">⌨️ Tastenbelegung</button>
+      <button data-sttab="ui" class="secondary">🎨 UI</button>
+      <button data-sttab="software" class="secondary">💾 Software</button>
+    </div>
+    <div class="settings-panes">
+
+    <!-- ── Audio ── -->
+    <div class="settings-pane" data-pane="audio">
+    <div class="settings-cols">
+
+      <!-- Spalte 1: Voicechat-Kontrolle -->
+      <div class="settings-col">
+        <div class="col-head">🎙️ Voicechat-Kontrolle</div>
+        <div class="set-block vcol-btns">
+          <button id="connBtn">Verbinden</button>
+          <button id="micBtn" class="secondary">🔇 Mikro aus</button>
+          <button id="deafenBtn" class="secondary">🔊 Ton an</button>
+          <button id="muteAllBtn" class="secondary" title="Ton UND Mikro auf einmal stummschalten">🔕 Alles stumm</button>
+        </div>
+        <div class="set-block">
+          <div class="set-label">Mikrofon-Modus</div>
+          <div class="vmode-stack">
+            <button class="vmode" data-mode="voice" id="vmodeVoice">🔊 Offenes Mikro</button>
+            <button class="vmode secondary" data-mode="ptt" id="vmodePtt">⌨️ Push-to-Talk</button>
+            <button class="vmode secondary" data-mode="ptm" id="vmodePtm">🔇 Push-to-Mute</button>
+          </div>
+        </div>
+        <div class="set-block">
+          <div class="set-label">🎙️ Mikrofon-Lautstärke</div>
+          <input id="micGain" type="range" min="0" max="200" step="5" value="100" style="width:100%;accent-color:var(--accent)">
+          <div style="font-size:11px;color:var(--muted)">Macht dein eigenes Mikro für alle anderen lauter oder leiser (100&nbsp;%&nbsp;=&nbsp;normal).</div>
+        </div>
+        <details class="set-block bf-audio-adv">
+          <summary class="set-label" style="cursor:pointer;list-style:none">🎚️ Erweiterte Audio-Einstellungen</summary>
+          <div style="font-size:11px;color:var(--muted);margin:2px 0 12px">Bearbeitet dein gesendetes Mikro (Reihenfolge: Rauschunterdrückung → Low-Cut → Gate → Kompressor → Limiter). Wirkt für alle anderen.</div>
+
+          <!-- Rauschunterdrückung -->
+          <label class="bf-comp-toggle"><input id="micNsOn" type="checkbox"> 🔇 Rauschunterdrückung</label>
+          <div class="comp-desc" style="margin:-2px 0 12px">Browser-Rauschminderung (Lüfter, Tastatur, Grundrauschen) direkt am Mikro.</div>
+
+          <!-- Low-Cut / High-Pass -->
+          <label class="bf-comp-toggle"><input id="micHpOn" type="checkbox"> 🩹 Low-Cut (High-Pass)</label>
+          <div id="micHpCtrls" class="comp-sec">
+            <div class="comp-row">
+              <div class="comp-head"><span>Grenzfrequenz</span><span id="micHpFreqV" class="comp-val"></span></div>
+              <input id="micHpFreq" type="range" min="40" max="300" step="5" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Schneidet tiefes Brummen/Rumpeln unterhalb dieser Frequenz weg (macht die Stimme klarer).</div>
+            </div>
+          </div>
+
+          <!-- Noise Gate -->
+          <label class="bf-comp-toggle"><input id="micGateOn" type="checkbox"> 🚪 Noise Gate</label>
+          <div id="micGateCtrls" class="comp-sec">
+            <div class="comp-row">
+              <div class="comp-head"><span>Schwelle (Threshold)</span><span id="micGateThresholdV" class="comp-val"></span></div>
+              <input id="micGateThreshold" type="range" min="-80" max="-20" step="1" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Ab welchem Pegel das Mikro öffnet. Höher = strenger (schneidet mehr weg).</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-head"><span>Attack</span><span id="micGateAttackV" class="comp-val"></span></div>
+              <input id="micGateAttack" type="range" min="0" max="50" step="1" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Wie schnell das Gate öffnet, wenn du sprichst.</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-head"><span>Release</span><span id="micGateReleaseV" class="comp-val"></span></div>
+              <input id="micGateRelease" type="range" min="20" max="1000" step="10" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Wie schnell es wieder schließt, wenn du still bist.</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-head"><span>Hold</span><span id="micGateHoldV" class="comp-val"></span></div>
+              <input id="micGateHold" type="range" min="0" max="1000" step="10" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Hält das Gate nach dem letzten Ton offen (verhindert Zerhacken in Sprechpausen).</div>
+            </div>
+          </div>
+
+          <!-- Kompressor -->
+          <label class="bf-comp-toggle"><input id="micCompOn" type="checkbox"> 🎚️ Kompressor</label>
+          <div id="micCompCtrls" class="comp-sec">
+            <div class="comp-row">
+              <div class="comp-head"><span>Vorverstärkung</span><span id="micPreGainV" class="comp-val"></span></div>
+              <input id="micPreGain" type="range" min="-24" max="24" step="1" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Signal anheben, bevor der Kompressor greift. Negative Werte senken.</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-head"><span>Schwelle (Threshold)</span><span id="micThresholdV" class="comp-val"></span></div>
+              <input id="micThreshold" type="range" min="-60" max="0" step="1" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Ab welchem Pegel er eingreift. Je niedriger, desto mehr Kompression.</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-head"><span>Ratio</span><span id="micRatioV" class="comp-val"></span></div>
+              <input id="micRatio" type="range" min="1" max="20" step="1" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Kompressionsverhältnis. Höher = stärkere Begrenzung. 1:1 = aus.</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-head"><span>Attack</span><span id="micAttackV" class="comp-val"></span></div>
+              <input id="micAttack" type="range" min="0" max="200" step="1" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Wie schnell er zuschlägt. Niedrig = schneller.</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-head"><span>Release</span><span id="micReleaseV" class="comp-val"></span></div>
+              <input id="micRelease" type="range" min="0" max="1000" step="10" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Wie schnell er loslässt. Höher = weicher.</div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-head"><span>Knee</span><span id="micKneeV" class="comp-val"></span></div>
+              <input id="micKnee" type="range" min="0" max="40" step="1" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Sanfter Übergang am Threshold. Höher = weicherer Einsatz.</div>
+            </div>
+          </div>
+
+          <!-- Limiter -->
+          <label class="bf-comp-toggle"><input id="micLimitOn" type="checkbox"> 🧱 Limiter</label>
+          <div id="micLimitCtrls" class="comp-sec">
+            <div class="comp-row">
+              <div class="comp-head"><span>Obergrenze (Ceiling)</span><span id="micLimitCeilV" class="comp-val"></span></div>
+              <input id="micLimitCeil" type="range" min="-12" max="0" step="1" style="width:100%;accent-color:var(--accent)">
+              <div class="comp-desc">Harte Decke gegen Übersteuern/Clipping bei lauten Spitzen (Schreien).</div>
+            </div>
+          </div>
+
+          <button id="micCompReset" class="secondary" style="width:100%;margin-top:6px;font-size:12px">↺ Standardwerte (Regler)</button>
+        </details>
+      </div>
+
+      <!-- Spalte 2: Voicechat-Einstellungen -->
+      <div class="settings-col">
+        <div class="col-head">⚙️ Voicechat-Einstellungen</div>
+        <div class="set-block">
+          <div class="set-label">🎤 Mikrofon (Eingabe)</div>
+          <select id="micDevSel" class="bf-select"><option>Standard</option></select>
+        </div>
+        <div class="set-block">
+          <div class="set-label">🔈 Ausgabegerät</div>
+          <select id="spkDevSel" class="bf-select"><option>Standard</option></select>
+        </div>
+        <div class="set-block">
+          <div class="set-label">🔊 Deine Sprechreichweite <span style="color:var(--muted)">(andere hören dich so weit)</span></div>
+          <div id="rangeBtns" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+        <div class="set-block">
+          <div class="set-label">🎚️ Lautstärke pro Spieler <span style="color:var(--muted)">(nur für dich)</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="font-size:12px;white-space:nowrap">🔊 Alle Spieler</span>
+            <input id="masterGain" type="range" min="0" max="200" step="5" value="100" style="flex:1;accent-color:var(--accent)">
+            <span id="masterGainVal" style="width:42px;text-align:right;font-size:12px;color:var(--muted)">100%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="font-size:12px;white-space:nowrap">🧭 3D-Stärke</span>
+            <input id="spatial3d" type="range" min="0" max="150" step="5" value="100" style="flex:1;accent-color:var(--accent)">
+            <span id="spatial3dVal" style="width:42px;text-align:right;font-size:12px;color:var(--muted)">100%</span>
+          </div>
+          <label class="bf-toggle-row" style="margin:2px 0 8px" title="Bei Knistern/Audio-Problemen ausschalten — Voice läuft dann ohne 3D/Unterwasser-Effekte weiter">
+            <div class="bf-tg-txt"><span class="bf-tg-lbl">🎛️ 3D &amp; Effekte</span><span class="bf-tg-desc">Bei Audio-Problemen (Knistern) ausschalten — Voice läuft dann ohne 3D/Unterwasser.</span></div>
+            <input id="voiceFxChk" type="checkbox" checked>
+          </label>
+          <input id="voiceSearch" placeholder="🔍 Spieler suchen…" style="width:100%;margin-bottom:6px;padding:7px;border-radius:6px;border:1px solid var(--border);background:rgba(0,0,0,0.25);color:#eee;box-sizing:border-box">
+          <div id="voiceUsers" style="max-height:220px;overflow:auto"></div>
+        </div>
+      </div>
+
+    </div><!-- /settings-cols (audio) -->
+    </div><!-- /pane audio -->
+
+    <!-- ── Tastenbelegung ── -->
+    <div class="settings-pane" data-pane="keys" hidden>
+      <div class="col-head">⌨️ Tastenbelegung</div>
+      <div id="hotkeyList"></div>
+      <button id="resetHkBtn" class="secondary" style="margin-top:10px;width:100%">Tasten zurücksetzen</button>
+    </div>
+
+    <!-- ── UI ── -->
+    <div class="settings-pane" data-pane="ui" hidden>
+    <div class="settings-cols">
+      <div class="settings-col">
+        <div class="set-block">
+          <div class="set-label">🎨 Farbthema</div>
+          <div id="themePicker" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"></div>
+        </div>
+        <div class="set-block">
+          <div class="set-label">⚡ Low-Spec / Performance</div>
+          <div class="bf-toggle-row"><div class="bf-tg-txt"><span class="bf-tg-lbl">⚡ Low-Spec-Modus</span><span class="bf-tg-desc">Weichzeichner + alle Effekte auf einmal aus — für schwächere PCs / mehr FPS.</span></div><button id="lowSpecBtn" class="bf-switch secondary" role="switch" aria-label="Low-Spec-Modus"></button></div>
+          <div class="set-label" style="margin-top:12px">Einzeln einstellen</div>
+          <div class="bf-toggle-row"><span class="bf-tg-lbl">🌫️ Weichzeichner</span><button id="blurToggleBtn" class="bf-switch" role="switch" aria-label="Weichzeichner"></button></div>
+          <div class="bf-toggle-row"><span class="bf-tg-lbl">⚡ Effekte</span><button id="fxToggleBtn" class="bf-switch" role="switch" aria-label="Effekte"></button></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px">🌫️ Weichzeichner (Blur) = größter FPS-Kostenpunkt. ⚡ Effekte = Animationen/Leuchten. Beim <em>Spielen</em> (Overlay-Dock zu) sind viele Effekte ohnehin automatisch aus.</div>
+          <div class="set-label" style="margin-top:14px">Experimentell</div>
+          <div class="bf-toggle-row"><span class="bf-tg-lbl">🪟 Fenster-Shrink</span><button id="shrinkToggleBtn" class="bf-switch secondary" role="switch" aria-label="Fenster-Shrink"></button></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px">🪟 Verkleinert das Overlay-Fenster beim Spielen (Dock zu) auf die HUD-Bereiche, statt den ganzen Bildschirm zu bedecken — gibt dem Spiel oft den schnellen Vollbild-Pfad zurück (mehr FPS). Wirkung ist GPU-/treiberabhängig: <em>ausprobieren</em>. Weniger sichtbares HUD (im Edit-Mode ausblenden) = stärkerer Effekt.</div>
+        </div>
+      </div>
+      <div class="settings-col">
+        <div class="set-block">
+          <div class="set-label">👁️ HUD-Sichtbarkeit</div>
+          <div id="hudVisToggles"></div>
+        </div>
+        <div class="set-block">
+          <div class="set-label">🗺️ Karten-Marker</div>
+          <div class="mk-set-row"><span>🚩 Wegpunkt-Farbe</span><input type="color" id="wpColorInp" value="#fbbf24"></div>
+          <div class="mk-set-row"><span>🚩 Wegpunkt-Größe</span><input type="range" id="wpSizeInp" min="0.6" max="3" step="0.1" value="1" style="accent-color:var(--accent)"></div>
+          <div class="mk-set-row"><span>📍 Spieler-Pfeil-Farbe</span><input type="color" id="selfColorInp" value="#00e5ff"></div>
+          <button id="markerResetBtn" class="secondary" style="width:100%;margin-top:8px">↩️ Marker zurücksetzen</button>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px">Farbe &amp; Größe des Wegpunkts sowie die Farbe deines eigenen Positions-Pfeils. Bleibt gespeichert.</div>
+        </div>
+        <div class="set-block">
+          <div class="set-label">🎨 Layout</div>
+          <button id="editModeBtn" style="width:100%">🎨 Edit-Mode (Panels verschieben)</button>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Panels per Drag verschieben — Positionen werden lokal gespeichert.</div>
+        </div>
+      </div>
+
+    </div><!-- /settings-cols (ui) -->
+    </div><!-- /pane ui -->
+
+    <!-- ── Software ── -->
+    <div class="settings-pane" data-pane="software" hidden>
+    <div class="settings-cols">
+      <div class="settings-col">
+        <div class="set-block">
+          <div class="col-head">ℹ️ Version</div>
+          <div class="sw-row"><span>Installierte Version</span><span id="swVersion" class="sw-vernum">…</span></div>
+          <button id="checkUpdateBtn" style="width:100%;margin-top:10px">🔄 Nach Updates suchen</button>
+          <div id="updateBox" style="display:none;margin-top:10px">
+            <div id="updateInfo" style="font-size:12px;color:var(--muted);margin:6px 0">Eine neue Version ist verfügbar.</div>
+            <button id="updateBtn" style="width:100%">Update herunterladen</button>
+          </div>
+        </div>
+        <div class="set-block">
+          <div class="col-head">👤 Sitzung</div>
+          <button id="logoutBtn" style="width:100%">Abmelden</button>
+        </div>
+      </div>
+      <div class="settings-col">
+        <div class="set-block">
+          <div class="col-head">📝 Letzte Änderungen</div>
+          <div id="swRelMeta" class="sw-rel-meta"></div>
+          <div id="swRelNotes" class="sw-rel-notes">Lade Release-Notes…</div>
+        </div>
+      </div>
+    </div><!-- /settings-cols (software) -->
+    </div><!-- /pane software -->
+    </div><!-- /settings-panes -->
+    <div class="btnrow">
+      <button id="closeBtn" class="secondary">Schließen</button>
+    </div>
+  </div>
+
+  <!-- Admin-Panel (eigenständiges Modal, NUR Admins — kein Support) -->
+  <div id="serverPanel">
+    <button id="serverCloseBtn" class="secondary" style="position:absolute;top:16px;right:18px;flex:none;width:auto;padding:6px 12px">✕</button>
+    <h2>🖥️ Admin <span style="font-weight:400;font-size:12px;color:var(--muted)">— Owner &amp; Admins</span></h2>
+    <div class="admin-tabs" id="serverTabs">
+      <button data-stab="welt">🌍 Welt</button>
+      <button data-stab="ai" class="secondary">🤖 AI</button>
+      <button data-stab="polymorph" class="secondary">🦖 Polymorph</button>
+      <button data-stab="objects" class="secondary">🧱 Objekte</button>
+      <button data-stab="karte" class="secondary">🗺️ Karte</button>
+      <button data-stab="godvoice" class="secondary">📣 Gottstimme</button>
+      <button data-stab="teamaudit" class="secondary">🛡️ Team-Audit</button>
+      <button data-stab="evrima" class="secondary">🏷️ Evrima</button>
+    </div>
+    <div class="admin-panes">
+      <div class="admin-pane" data-pane="welt"><div id="svWeltBody"><div class="dt-muted">Lade…</div></div></div>
+      <div class="admin-pane" data-pane="ai" hidden><div id="svAiBody"><div class="dt-muted">Lade…</div></div></div>
+      <div class="admin-pane" data-pane="polymorph" hidden><div id="svPolyBody"><div class="dt-muted">Lade…</div></div></div>
+      <div class="admin-pane" data-pane="objects" hidden><div id="svObjBody"><div class="dt-muted">Lade…</div></div></div>
+      <div class="admin-pane" data-pane="karte" hidden>
+        <div class="sec-title">🔧 Karten-Kalibrierung</div>
+        <div class="set-block" style="margin:8px 0 14px">
+          <button id="adminCalibBtn" style="width:100%">🔧 Karte kalibrieren (global)</button>
+        </div>
+        <div class="sec-title">📍 Teleport-Punkte</div>
+        <div class="set-block" style="margin-top:8px">
+          <div class="set-label">TP-Punkt an aktueller Position</div>
+          <input id="tpName" placeholder="Name" maxlength="40" class="bf-select" style="cursor:text;margin-bottom:6px">
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <input id="tpPrice" type="number" min="0" placeholder="Preis" class="bf-select" style="flex:1">
+            <input id="tpCooldown" type="number" min="0" placeholder="Cooldown (Min)" class="bf-select" style="flex:1">
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;user-select:none">
+            <input id="tpWater" type="checkbox" style="width:auto;cursor:pointer"> 💧 Wasser-Teleport (im Overlay hervorgehoben)
+          </label>
+          <button id="tpCreateBtn" style="width:100%">＋ Erstellen</button>
+          <div id="adminTpList" style="max-height:200px;overflow:auto;margin-top:8px;font-size:12px"></div>
+        </div>
+      </div>
+      <div class="admin-pane" data-pane="evrima" hidden><div id="evrimaBody"><div class="dt-muted">Lade…</div></div></div>
+      <div class="admin-pane" data-pane="godvoice" hidden>
+        <div class="sec-title">📣 Gottstimme — server-weite Durchsage</div>
+        <div class="set-block" style="margin-top:8px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:9px">Während der Durchsage hören dich ALLE Online-Spieler voll „von oben" mit leichtem Verzerr-Effekt; alle anderen Stimmen werden abgesenkt. Erneut klicken = aus. Du musst im Voice verbunden und lebend sein.</div>
+          <button id="godVoiceBtn" style="width:100%">📣 Gottstimme starten</button>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;cursor:pointer;user-select:none">
+            <input id="godVoiceReverbChk" type="checkbox" style="width:auto;cursor:pointer" checked> 🕊️ Himmels-Hall (Effekt an)
+          </label>
+          <div id="godVoiceHint" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="admin-pane" data-pane="teamaudit" hidden>
+        <div id="taBody"><div class="dt-muted">Lade…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🖥️ Server-Steuerung: eigenständiger Dock-Bereich (Owner&Admins) -->
+  <div id="srvPanel">
+    <button id="srvCloseBtn" class="secondary" style="position:absolute;top:16px;right:18px;flex:none;width:auto;padding:6px 12px">✕</button>
+    <h2>🖥️ Server <span style="font-weight:400;font-size:12px;color:var(--muted)">— Steuerung &amp; Live-Status</span></h2>
+    <div class="admin-tabs" id="srvTabs">
+      <button data-srvt="overview">📊 Übersicht</button>
+      <button data-srvt="players" class="secondary">👥 Spieler</button>
+      <button data-srvt="limits" class="secondary">🦖 Limits</button>
+      <button data-srvt="betrieb" class="secondary">🛠️ Betrieb</button>
+      <button data-srvt="control" class="secondary">⚙️ Steuerung</button>
+    </div>
+    <div class="admin-panes">
+
+      <!-- 📊 Übersicht: Status + Last-Kacheln + Auslastungs-Kurve + Subsystem-Matrix -->
+      <div class="admin-pane" data-srvp="overview">
+        <div id="srvStatus" style="margin-bottom:14px"><div class="dt-muted">Lade Status…</div></div>
+        <div id="srvTiles" class="srv-tiles" style="margin-bottom:16px"><div class="dt-muted">Lade Kennzahlen…</div></div>
+        <div class="dt-sec">📈 Auslastung — Spieler (24 h)</div>
+        <canvas id="srvSpark" width="560" height="90" style="width:100%;height:90px;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:8px;margin:6px 0 16px"></canvas>
+        <div class="dt-sec">🩺 Subsysteme</div>
+        <div id="srvHealth" style="margin:6px 0 4px"><div class="dt-muted">Lade…</div></div>
+        <div id="srvHealthMeta" style="font-size:10px;color:var(--muted);margin-bottom:8px"></div>
+      </div>
+
+      <!-- 👥 Spieler online (Live aus dem Positions-Poll) -->
+      <div class="admin-pane" data-srvp="players" hidden>
+        <div class="dt-sec">👥 Spieler online (<span id="srvPlayerCount">–</span>)</div>
+        <input id="srvPlayerSearch" class="tm-input" placeholder="🔎 Spieler oder Dino suchen…" style="width:100%;box-sizing:border-box;margin:6px 0 8px">
+        <div id="srvPlayers" style="max-height:440px;overflow:auto;font-size:12px"></div>
+      </div>
+
+      <!-- 🦖 Class-Limits -->
+      <div class="admin-pane" data-srvp="limits" hidden>
+        <div id="svClassBody"><div class="dt-muted">Lade…</div></div>
+      </div>
+
+      <!-- 🛠️ Betrieb: Versionen & Branches + Log-Viewer (Status-Matrix/Auslastung stehen im Übersichts-Tab) -->
+      <div class="admin-pane" data-srvp="betrieb" hidden>
+        <div class="sec-title">🏷️ Versionen &amp; Branches</div>
+        <div id="opsVersions" class="dt-muted" style="margin:8px 0 14px">Lade…</div>
+        <div class="sec-title">📜 Logs</div>
+        <div style="display:flex;gap:6px;align-items:center;margin:8px 0 6px;flex-wrap:wrap">
+          <select id="opsLogSel" class="bf-select" style="flex:0 0 190px"></select>
+          <input id="opsLogFilter" placeholder="🔍 Filter…" class="bf-select" style="cursor:text;flex:1;min-width:120px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;user-select:none">
+            <input id="opsLogFollow" type="checkbox" style="width:auto;cursor:pointer"> Folgen
+          </label>
+          <button id="opsLogReload" class="secondary" style="flex:none;width:auto;padding:6px 10px">🔄</button>
+          <button id="opsLogCopy" class="secondary" style="flex:none;width:auto;padding:6px 10px">📋</button>
+        </div>
+        <pre id="opsLogBox" style="max-height:340px;overflow:auto;background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:11px;line-height:1.35;white-space:pre-wrap;word-break:break-all;margin:0"></pre>
+      </div>
+
+      <!-- ⚙️ Steuerung: Ansage / Wartung / Start-Stop -->
+      <div class="admin-pane" data-srvp="control" hidden>
+        <div class="dt-sec">📢 Ansage (ingame)</div>
+        <div class="dt-form" style="margin-bottom:18px">
+          <input id="srvMsg" class="tm-input" placeholder="z.B. Event startet in 10 Min!">
+          <button id="srvAnnounce" style="width:100%;margin-top:8px">📢 Ansage senden</button>
+        </div>
+
+        <div class="dt-sec">🧹 Wartung</div>
+        <div class="dt-form" style="margin-bottom:18px"><button id="srvWipe" class="secondary" style="width:100%">🧹 Kadaver leeren (wipecorpses)</button></div>
+
+        <div class="dt-sec" style="color:#f87171">⚙️ Server-Steuerung (gefährlich)</div>
+        <div class="dt-form">
+          <div class="dt-row" style="display:flex;gap:6px">
+            <button id="srvStart" style="flex:1;background:#16a34a">▶️ Start</button>
+            <button id="srvRestart" class="secondary" style="flex:1">🔁 Restart</button>
+            <button id="srvStop" style="flex:1;background:#b91c1c">⏹️ Stop</button>
+          </div>
+          <div class="dt-muted" style="margin-top:4px">Stop/Restart trennt ALLE Spieler!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="adminPanel">
+    <button id="adminCloseBtn" class="secondary" style="position:absolute;top:16px;right:18px;flex:none;width:auto;padding:6px 12px">✕</button>
+    <h2>🛡️ Team <span style="font-weight:400;font-size:12px;color:var(--muted)">— Moderatoren &amp; Supporter</span></h2>
+    <div class="set-block" id="dutyBlock" style="display:none;margin-bottom:12px;border:1px solid rgba(236,72,153,0.4);border-radius:10px;padding:12px;background:rgba(236,72,153,0.08)">
+      <div class="col-head" style="margin:0 0 4px">🩷 Dienst-Modus</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:9px">Als Moderator/Supporter musst du den Dienst-Modus einschalten, um die Werkzeuge zu nutzen. Friert deine Vitals ein (kein Verhungern) und legt den Admin-Skin an. Erneut klicken = aus. Du musst lebend auf einem Dino sein.</div>
+      <button id="dutyToggleBtn" style="width:100%">🩷 Dienst-Modus einschalten</button>
+    </div>
+    <div class="admin-tabs" id="adminTabs">
+      <button data-atab="tools">🛠️ Tools</button>
+      <button data-atab="ansage" class="secondary">📢 Ansage</button>
+      <button data-atab="dtoken" class="secondary">🦕 Dino-Token</button>
+      <button data-atab="pvp" class="secondary">🏆 PvP / Prime</button>
+      <button data-atab="account" class="secondary admin-only">🔗 Accounts</button>
+      <button data-atab="lootbox" class="secondary admin-only">🎁 Lootbox</button>
+      <button data-atab="warn" class="secondary">⚠️ Verwarnungen</button>
+      <button data-atab="audit" class="secondary">📋 Player-Audit</button>
+      <button data-atab="handbuch" class="secondary">📖 Handbuch</button>
+    </div>
+    <div class="admin-panes">
+    <div class="admin-pane" data-pane="tools">
+    <div class="settings-cols">
+
+      <!-- Spalte 1: Spieler-Verwaltung -->
+      <div class="settings-col">
+        <div class="col-head">👤 Spieler-Verwaltung</div>
+        <div class="set-block">
+          <div class="set-label">Discord-User suchen</div>
+          <input id="admUserSearch" list="admUserList" placeholder="Name tippen…" class="bf-select" style="cursor:text" autocomplete="off">
+          <datalist id="admUserList"></datalist>
+          <button id="admUserLoad" style="width:100%;margin-top:8px">🔍 Info laden</button>
+        </div>
+        <div id="admUserInfo" class="set-block" style="display:none;font-size:12px;line-height:1.6"></div>
+        <div id="admUserActions" class="set-block" style="display:none">
+          <button id="admLightningBtn" style="width:100%;background:#dc2626">⚡ Lightning Strike (Slay)</button>
+        </div>
+        <div class="set-block">
+          <div class="set-label">💬 Nachricht an Spieler (Toast)</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Wird dem Spieler im Overlay als Toast angezeigt (beim nächsten Update, wenn er online ist).</div>
+          <input id="msgUserSearch" list="admUserList" placeholder="Name tippen…" class="bf-select" style="cursor:text" autocomplete="off">
+          <textarea id="msgText" placeholder="Nachricht…" maxlength="300" rows="3" class="bf-select" style="cursor:text;margin-top:6px;resize:vertical;box-sizing:border-box"></textarea>
+          <button id="msgSendBtn" style="width:100%;margin-top:8px">💬 Als Toast senden</button>
+          <hr style="border:0;border-top:1px solid var(--border);margin:14px 0">
+          <div class="set-label">🎯 Spieler verfolgen (Follow)</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Dein Admin-Pawn (Fly-Mode) folgt dem Spieler ~50 m von oben. Im Fly-Mode sein, dann starten.</div>
+          <input id="followUserSearch" list="admUserList" placeholder="Name tippen…" class="bf-select" style="cursor:text" autocomplete="off">
+          <button id="followToggleBtn" style="width:100%;margin-top:8px">🎯 Follow starten</button>
+        </div>
+      </div>
+
+      <!-- Spalte 2: Beschenken (ab Moderator) -->
+      <div class="settings-col ingame-only">
+        <div class="col-head">🎁 Beschenken</div>
+        <div class="set-block">
+          <div class="set-label">Ziel</div>
+          <select id="giftTargetKind" class="bf-select">
+            <option value="user">👤 Einzelner User</option>
+            <option value="role">👥 Rolle (alle Mitglieder)</option>
+            <option value="online">🌐 Alle Online</option>
+          </select>
+        </div>
+        <div id="giftUserBox" class="set-block">
+          <div class="set-label">User</div>
+          <input id="giftUserSearch" list="admUserList" placeholder="Name tippen…" class="bf-select" style="cursor:text" autocomplete="off">
+        </div>
+        <div id="giftRoleBox" class="set-block" style="display:none">
+          <div class="set-label">Rolle</div>
+          <select id="giftRoleSel" class="bf-select"></select>
+        </div>
+        <div class="set-block">
+          <div class="set-label">Was</div>
+          <select id="giftType" class="bf-select"></select>
+        </div>
+        <div class="set-block">
+          <div class="set-label">Menge</div>
+          <input id="giftAmount" type="number" min="1" value="1" class="bf-select" style="cursor:text">
+        </div>
+        <button id="giftSubmit" style="width:100%;margin-top:14px;background:#16a34a">🎁 Vergeben</button>
+        <div id="giftResult" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
+      </div>
+
+    </div>
+    </div><!-- /pane tools -->
+
+    <!-- Dino-Token-Verwaltung (Staff: geben/bearbeiten/löschen) -->
+    <div class="admin-pane" data-pane="dtoken" hidden>
+      <div style="display:flex;gap:6px;margin-bottom:14px">
+        <button id="dtTabGive" style="flex:1">🎁 Geben</button>
+        <button id="dtTabEdit" class="secondary" style="flex:1">✏️ Bearbeiten</button>
+        <button id="dtTabDel" class="secondary" style="flex:1">🗑️ Löschen</button>
+      </div>
+      <div id="dtBody"><div class="dt-muted">Lade…</div></div>
+    </div>
+
+    <!-- PvP-Builds + Prime auf aktiven Dino -->
+    <div class="admin-pane" data-pane="pvp" hidden>
+      <div id="ppBody"><div class="dt-muted">Lade…</div></div>
+    </div>
+
+    <!-- Account-Verwaltung (nur Admin) -->
+    <div class="admin-pane admin-only" data-pane="account" hidden>
+      <div id="acBody"><div class="dt-muted">Lade…</div></div>
+    </div>
+
+    <!-- Lootbox-Drop-Gewichte (nur Admin) -->
+    <div class="admin-pane admin-only" data-pane="lootbox" hidden>
+      <div id="lbCfgRoot"><div class="dt-muted">Lade…</div></div>
+    </div>
+
+    <!-- Announce + Server-Steuerung -->
+    <!-- Verwarnungen -->
+    <div class="admin-pane" data-pane="warn" hidden>
+      <div id="warnBody"></div>
+    </div>
+
+    <!-- Player-Audit: Dino-Aktions-Log (nur Owner/Admin/Developer) -->
+    <div class="admin-pane" data-pane="audit" hidden>
+      <div id="paBody"><div class="dt-muted">Lade…</div></div>
+    </div>
+
+    <div class="admin-pane" data-pane="ansage" hidden>
+      <div class="settings-col">
+        <div class="col-head">📢 Server-Ansage (ingame)</div>
+        <div class="set-block">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Sendet eine Nachricht an ALLE Spieler auf dem Server (z. B. Event-Hinweis, Restart-Warnung).</div>
+          <input id="svMsg" class="tm-input" style="width:100%;box-sizing:border-box" placeholder="z.B. Event startet in 10 Min!">
+          <button id="svAnnounce" style="width:100%;margin-top:8px">📢 Ansage senden</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff-Handbuch -->
+    <div class="admin-pane" data-pane="handbuch" hidden>
+      <div id="hbBody"></div>
+    </div>
+
+    </div><!-- /admin-panes -->
+  </div>
+
+  <!-- Server-Banner (oben mittig) -->
+  <div id="serverBanner">⚠️ Nicht auf dem Ferrosaur-Server — verbinde dich im Spiel, um Karte & Proximity zu nutzen.</div>
+  <div id="parkWarn"></div>
+  <div id="goldenHud"></div>
+
+  <!-- Update-Hinweis (oben, während des Betriebs) -->
+  <div id="updateHint" style="display:none;position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9999;background:rgba(var(--accent-rgb),0.92);color:#fff;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--glow);cursor:pointer">⬆️ Update verfügbar</div>
+
+  <!-- Penetrante Warnung: auf dem Server, aber NICHT im Voice -->
+  <style>@keyframes bfPulse{0%,100%{opacity:1;transform:translateX(-50%) scale(1)}50%{opacity:.6;transform:translateX(-50%) scale(1.04)}}</style>
+  <div id="voiceWarn" style="display:none;position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:10000;background:#dc2626;color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;font-weight:800;box-shadow:0 0 18px rgba(220,38,38,.85);cursor:pointer;animation:bfPulse 1.1s ease-in-out infinite">🔴 Du bist NICHT im Voice-Chat — klicken zum Verbinden</div>
+
+  <!-- Auto-Kalibrierung: Anweisung über der Karte -->
+  <div id="calibPrompt" style="display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:10001;background:rgba(15,10,30,.96);border:1px solid var(--accent);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:var(--glow);text-align:center;max-width:480px">
+    <div id="calibPromptText">…</div>
+    <button id="calibSkipBtn" class="secondary" style="margin-top:8px;margin-right:6px;display:none">Punkt überspringen</button>
+    <button id="calibCancelBtn" class="secondary" style="margin-top:8px;display:none">Abbrechen</button>
+  </div>
+
+  <!-- Dino-Detailansicht (über Garage/Markt) -->
+  <div id="dinoDetail"><div class="box"></div></div>
+
+  <!-- Feature-Panels (Platzhalter / werden gefüllt) -->
+  <div id="dinoInfo" class="feature-panel"></div>
+  <div id="group" class="feature-panel"></div>
+  <div id="profile" class="feature-panel"></div>
+  <div id="quests" class="feature-panel"></div>
+  <div id="leaderboard" class="feature-panel"></div>
+  <div id="lootbox" class="feature-panel"></div>
+  <div id="lexikon" class="feature-panel"></div>
+  <div id="support" class="feature-panel"></div>
+  <div id="notifications" class="feature-panel">
+    <h2>🔔 Postfach</h2>
+    <p>Verpasste Benachrichtigungen — Belohnungen, Hinweise & mehr. Neue Meldungen erscheinen auch als Toast.</p>
+    <div id="notifList" class="notif-list"></div>
+    <button id="notifClearBtn" class="secondary" style="margin-top:12px">🗑️ Verlauf leeren</button>
+  </div>
+
+  <!-- Dock (Overlay-Modus / Alt): klickbare Schnellzugriffe. Icons werden per JS injiziert. -->
+  <div id="dock">
+    <!-- Blitz-FX (nicht vom Aufzieh-Clip betroffen) -->
+    <div id="dockCore"></div>
+    <svg id="dockLightning" viewBox="0 0 660 80" preserveAspectRatio="none" aria-hidden="true">
+      <g class="bolt-edge">
+        <polyline points="14,6 70,1 128,10 196,2 262,9 318,1 372,10 440,2 506,9 566,1 628,8 646,4"/>
+        <polyline points="14,74 70,79 128,70 196,78 262,71 318,79 372,70 440,78 506,71 566,79 628,72 646,76"/>
+        <polyline points="4,14 1,34 9,52 2,66"/>
+        <polyline points="656,14 659,34 651,52 658,66"/>
+      </g>
+      <g class="bolt-burst">
+        <polyline points="330,40 296,30 268,46 232,28 202,47 168,31 138,41 104,29 78,44 44,30 12,42"/>
+        <polyline points="330,40 364,30 392,46 428,28 458,47 492,31 522,41 556,29 582,44 616,30 648,42"/>
+      </g>
+    </svg>
+    <div id="dockInner">
+      <button class="dock-btn" data-act="profile" aria-label="Profil"><span>Profil</span></button>
+      <button class="dock-btn" data-act="support" aria-label="Support"><span>Support</span></button>
+      <button class="dock-btn" data-act="dino" aria-label="Dino"><span>Dino</span></button>
+      <button class="dock-btn" data-act="group" aria-label="Gruppe"><span>Gruppe</span></button>
+      <button class="dock-btn" data-act="lexikon" aria-label="Lexikon"><span>Lexikon</span></button>
+      <button class="dock-btn" data-act="garage" aria-label="Garage"><span>Garage</span></button>
+      <button class="dock-btn" data-act="market" aria-label="Markt"><span>Markt</span></button>
+      <button class="dock-btn" data-act="lootbox" aria-label="Lootbox"><span>Lootbox</span></button>
+      <button class="dock-btn" data-act="quests" aria-label="Quests"><span>Quests</span></button>
+      <button class="dock-btn" data-act="leaderboard" aria-label="Wandern"><span>Wandern</span></button>
+      <button class="dock-btn" data-act="notifications" aria-label="Postfach"><span>Postfach</span></button>
+      <button class="dock-btn" data-act="map" aria-label="Karte"><span>Karte</span></button>
+      <button class="dock-btn" data-act="skin" aria-label="Skin"><span>Skin</span></button>
+      <button class="dock-btn" data-act="settings" aria-label="Einstellungen"><span>Settings</span></button>
+      <button class="dock-btn" id="dockAdmin" data-act="admin" aria-label="Team" style="display:none"><span>Team</span></button>
+      <button class="dock-btn" id="dockServer" data-act="server" aria-label="Admin" style="display:none"><span>Admin</span></button>
+      <button class="dock-btn" id="dockSrvCtl" data-act="srvctl" aria-label="Server" style="display:none"><span>Server</span></button>
+      <div class="dock-sep"></div>
+      <button class="dock-btn dock-close" id="dockClose" aria-label="Schließen & weiterspielen"><span>Schließen</span></button>
+    </div>
+  </div>
+  <div id="skinEditor" class="feature-panel"><h2>🎨 Skin Editor</h2><p>Wird in Kürze verfügbar sein.</p><button class="closeFeature secondary">Schließen</button></div>
+  <div id="garage" class="feature-panel"><h2>🚗 Garage</h2><p>Ein- und Ausparken deiner Dinos — kommt in Phase 4.</p><button class="closeFeature secondary">Schließen</button></div>
+  <div id="market" class="feature-panel"><h2>🦖 Dino-Markt</h2><p>Dinos kaufen & verkaufen — kommt in Phase 4.</p><button class="closeFeature secondary">Schließen</button></div>
+
+  <button id="bugReportBtn" title="Bug melden">🐛 Bug melden</button>
+  <div id="bugModal">
+    <div style="font-weight:700;font-size:15px;margin-bottom:4px">🐛 Bug melden</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Beschreibe kurz, was schiefläuft. Ein Screenshot hilft uns enorm.</div>
+    <input id="bugTitle" maxlength="120" placeholder="Titel (kurz) *" style="width:100%;box-sizing:border-box;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg,#1a1230);color:#eee;margin-bottom:8px">
+    <textarea id="bugBody" maxlength="3000" placeholder="Was ist passiert? Wo/wann?" style="width:100%;box-sizing:border-box;height:88px;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg,#1a1230);color:#eee;resize:vertical;margin-bottom:8px"></textarea>
+    <div style="display:flex;gap:8px">
+      <button id="bugShotBtn" class="secondary" style="flex:1">📷 Screenshot</button>
+      <button id="bugFileBtn" class="secondary" style="flex:1">🖼️ Bild wählen</button>
+      <input id="bugFile" type="file" accept="image/*" style="display:none">
+    </div>
+    <img id="bugShot" alt="Vorschau">
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button id="bugCancel" class="secondary" style="flex:1">Abbrechen</button>
+      <button id="bugSubmit" style="flex:1;background:var(--accent);border:0;color:#fff">Senden</button>
+    </div>
+  </div>
+  <script src="dist/overlay.js"></script>
+</body>
+</html>

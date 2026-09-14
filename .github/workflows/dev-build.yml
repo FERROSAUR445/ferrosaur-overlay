@@ -1,0 +1,136 @@
+# Test-Build des Overlays bei jedem Push/Merge auf dev.
+# Kein Publish, kein Auto-Update — nur ein Installer als Artifact zum Testen.
+# Der Code/package.json hat Test-Defaults (api-test.ferrosaur.de, appId
+# "de.ferrosaur.overlay.test", productName "Ferrosaur Overlay Test") — main
+# überschreibt das im release.yml via app/scripts/patch-prod.js vor dem Build.
+# Kein manuelles Ändern beim Merge nötig.
+# Die abweichende appId/productName ist Absicht: der Test-Installer landet dadurch in
+# einem eigenen Installpfad/Registry-Eintrag und lässt sich parallel zur echten
+# Produktiv-Installation installieren (Windows NSIS + Linux AppImage/Desktop-Eintrag).
+name: Build Test-Installer (dev)
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: overlay-dev-build
+  cancel-in-progress: true   # nur der neueste dev-Stand ist interessant
+
+jobs:
+  build-test-win:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+      - name: Quell-Konfiguration prüfen
+        # Riegel gegen versehentlich committete Test-Umleitungen (Prod-API,
+        # verschobener Loopback-Port). MUSS vor patch-prod laufen — danach
+        # steht die Produktions-URL dort zu Recht.
+        run: node scripts/check-source-config.js
+      - run: npm run build:renderer
+
+      # Monotone Prerelease-Version pro dev-Push (1.9.2-dev.<run>), damit Test-Clients bei JEDEM
+      # dev-Push ein Update ziehen (electron-updater aktualisiert nur bei höherer Version).
+      - name: Dev-Version setzen
+        shell: bash
+        run: |
+          BASE=$(node -p "require('./package.json').version")
+          DEV="${BASE}-dev.${{ github.run_number }}"
+          node -e "const f='./package.json',p=require(f);p.version='${DEV}';require('fs').writeFileSync(f,JSON.stringify(p,null,2)+'\n')"
+          echo "Dev-Version: $DEV"
+
+      - name: Installer bauen (KEIN GitHub-Publish)
+        run: npx electron-builder --win --publish never
+
+      # VOR dem Umbenennen hochladen — latest.yml referenziert den Original-Dateinamen.
+      # Enthüllt Test-Auto-Update: api-test/overlay bekommt Feed + Installer + kuratierte Notes.
+      - name: Test-Artefakte aufs Backend laden (api-test)
+        shell: bash
+        run: |
+          for f in release/latest.yml release/*.exe release/*.exe.blockmap; do
+            [ -e "$f" ] || continue
+            echo "Upload $(basename "$f")"
+            curl -fsS -H "Authorization: Bearer $BF_OVERLAY_UPLOAD_TOKEN" -F "file=@$f" "$API/overlay/upload"
+          done
+          node scripts/changelog-to-json.js --out releases.json
+          curl -fsS -H "Authorization: Bearer $BF_OVERLAY_UPLOAD_TOKEN" -F "file=@releases.json" "$API/overlay/upload"
+        env:
+          API: https://api-test.ferrosaur.de
+          BF_OVERLAY_UPLOAD_TOKEN: ${{ secrets.BF_OVERLAY_UPLOAD_TOKEN_TEST }}
+
+      - name: Versionierter Dateiname (Artifact)
+        shell: bash
+        run: |
+          V=$(node -p "require('./package.json').version")
+          mv "release/Ferrosaur-Overlay-Test-Setup.exe" "release/Ferrosaur-Overlay-TEST-${V}-${GITHUB_SHA::7}.exe"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: overlay-test-installer-win
+          path: app/release/*.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  build-test-linux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+      - name: Quell-Konfiguration prüfen
+        # Riegel gegen versehentlich committete Test-Umleitungen (Prod-API,
+        # verschobener Loopback-Port). MUSS vor patch-prod laufen — danach
+        # steht die Produktions-URL dort zu Recht.
+        run: node scripts/check-source-config.js
+      - run: npm run build:renderer
+
+      - name: Dev-Version setzen
+        run: |
+          BASE=$(node -p "require('./package.json').version")
+          DEV="${BASE}-dev.${{ github.run_number }}"
+          node -e "const f='./package.json',p=require(f);p.version='${DEV}';require('fs').writeFileSync(f,JSON.stringify(p,null,2)+'\n')"
+          echo "Dev-Version: $DEV"
+
+      - name: Installer bauen (KEIN GitHub-Publish)
+        run: npx electron-builder --linux --publish never
+
+      # VOR dem Umbenennen hochladen — latest-linux.yml referenziert den Original-Dateinamen.
+      - name: Test-Artefakte aufs Backend laden (api-test)
+        run: |
+          for f in release/latest-linux.yml release/*.AppImage; do
+            [ -e "$f" ] || continue
+            echo "Upload $(basename "$f")"
+            curl -fsS -H "Authorization: Bearer $BF_OVERLAY_UPLOAD_TOKEN" -F "file=@$f" "$API/overlay/upload"
+          done
+        env:
+          API: https://api-test.ferrosaur.de
+          BF_OVERLAY_UPLOAD_TOKEN: ${{ secrets.BF_OVERLAY_UPLOAD_TOKEN_TEST }}
+
+      - name: Versionierter Dateiname (Artifact)
+        run: |
+          V=$(node -p "require('./package.json').version")
+          mv "release/Ferrosaur-Overlay-Test-Setup.AppImage" "release/Ferrosaur-Overlay-TEST-${V}-${GITHUB_SHA::7}.AppImage"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: overlay-test-installer-linux
+          path: app/release/*.AppImage
+          if-no-files-found: error
+          retention-days: 14

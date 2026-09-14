@@ -1,0 +1,292 @@
+# Public-Release des Overlays bei jedem Push/Merge auf main.
+#
+# Die Version wird aus app/package.json DES MERGES gelesen — der Mensch bumpt sie im
+# Feature-/Release-PR, der Merge released dann genau diese Version.
+# Veröffentlicht wird auf GitHub Releases: das IST der electron-updater-Feed
+# (publish-Provider "github" in app/package.json) -> Auto-Update greift sofort für alle.
+#
+# Guard: Existiert der Tag zur Version schon (Version nicht gebumpt), wird sauber
+# übersprungen statt zu scheitern — sonst würde jeder main-Push ohne Bump rot.
+#
+# Der Code/package.json hat Test-Defaults (api-test.ferrosaur.de, appId/productName
+# mit ".test"/"Test"-Suffix — siehe dev-build.yml). Vor dem Build patcht
+# app/scripts/patch-prod.js beides auf die Produktiv-Werte — kein manuelles Ändern.
+# Grund für die Test-Defaults im Repo: so bleibt ein lokal gebauter oder dev-Branch-
+# Installer immer ein Test-Build (andere appId/productName/Installpfad) und kollidiert
+# nie mit einer echten Produktiv-Installation — beide sind parallel installierbar.
+# Zwei Plattformen, ein Release: Windows (nsis) und Linux (AppImage) laden in DASSELBE
+# GitHub-Release. Die Feeds sind getrennt (latest.yml / latest-linux.yml), die Updater
+# sehen einander nicht. Reihenfolge ist wichtig — siehe die Job-Kommentare unten.
+name: Build & Release (main)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: overlay-release
+  cancel-in-progress: false   # ein laufendes Release NIE abbrechen
+
+jobs:
+  # Windows-Build. Setzt ausserdem Version/Tag fest und legt den Tag an — die Folgejobs
+  # uebernehmen beides ueber die Outputs, damit der Guard nur EINMAL ausgewertet wird.
+  release:
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      tag: ${{ steps.v.outputs.tag }}
+      exists: ${{ steps.v.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # volle Historie + Tags für Changelog und Tag-Guard
+
+      - name: Version + Tag aus dem Merge bestimmen
+        id: v
+        shell: bash
+        run: |
+          V=$(node -p "require('./app/package.json').version")
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "tag=v$V"    >> "$GITHUB_OUTPUT"
+          if git rev-parse "v$V" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Version $V ist bereits released (Tag v$V existiert) -> kein neues Release. Fuer ein Release die Version in app/package.json bumpen."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Release-Version: $V (Tag v$V)"
+          fi
+
+      - name: Quell-Konfiguration prüfen
+        # MUSS vor patch-prod laufen: danach steht die Produktions-URL dort
+        # zu Recht. Faengt ab, dass eine committete Test-Umleitung in einen
+        # Release geraet.
+        if: steps.v.outputs.exists == 'false'
+        run: node app/scripts/check-source-config.js
+
+      - name: Produktiv-Werte setzen (appId, productName, API-URL)
+        if: steps.v.outputs.exists == 'false'
+        run: node app/scripts/patch-prod.js
+
+      - uses: actions/setup-node@v4
+        if: steps.v.outputs.exists == 'false'
+        with:
+          node-version: 20
+
+      - name: Tag setzen
+        if: steps.v.outputs.exists == 'false'
+        shell: bash
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.v.outputs.tag }}" -m "Ferrosaur Overlay ${{ steps.v.outputs.tag }}"
+          git push origin "${{ steps.v.outputs.tag }}"
+
+      - name: Dependencies
+        if: steps.v.outputs.exists == 'false'
+        working-directory: app
+        run: npm ci
+
+      - name: Renderer bauen
+        if: steps.v.outputs.exists == 'false'
+        working-directory: app
+        run: npm run build:renderer
+
+      - name: Installer bauen & auf GitHub Releases veröffentlichen
+        if: steps.v.outputs.exists == 'false'
+        working-directory: app
+        run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Ab 1.10.0 fragt AUCH die Produktivversion das eigene Backend nach Updates
+      # (main.js setupAutoUpdate). Ohne diesen Upload suchen alle Clients ins Leere —
+      # der GitHub-Release allein genuegt dann nicht mehr.
+      - name: Overlay-Artefakte aufs Backend laden (Windows)
+        if: steps.v.outputs.exists == 'false'
+        working-directory: app
+        shell: bash
+        run: |
+          for f in release/latest.yml release/*.exe release/*.exe.blockmap; do
+            [ -e "$f" ] || continue
+            echo "Upload $(basename "$f")"
+            curl -fsS -H "Authorization: Bearer $BF_OVERLAY_UPLOAD_TOKEN" -F "file=@$f" "$API/overlay/upload"
+          done
+        env:
+          API: https://api.ferrosaur.de
+          BF_OVERLAY_UPLOAD_TOKEN: ${{ secrets.BF_OVERLAY_UPLOAD_TOKEN }}
+
+  # Linux-AppImage ins SELBE Release. NACH dem Windows-Job, nicht parallel: sonst wuerden beide
+  # gleichzeitig das Draft-Release anlegen wollen (Race), und den Tag setzt ohnehin nur "release".
+  # AppImage und nicht deb/rpm/pacman — electron-updater 6.8.9 nimmt auf Linux per Default den
+  # AppImageUpdater; die Paket-Updater brauchen root/pkexec zum Installieren (out/main.js:44-74),
+  # was fuer ein vom Spieler gestartetes Overlay unbrauchbar ist.
+  build-linux:
+    needs: release
+    if: needs.release.outputs.exists == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Renderer bauen
+        working-directory: app
+        run: npm run build:renderer
+
+      - name: Quell-Konfiguration prüfen
+        # MUSS vor patch-prod laufen — danach steht die Produktions-URL zu Recht.
+        run: node app/scripts/check-source-config.js
+
+      - name: Produktiv-Werte setzen (appId, productName, API-URL)
+        run: node app/scripts/patch-prod.js
+
+      - name: AppImage bauen & auf GitHub Releases veröffentlichen
+        working-directory: app
+        run: npx electron-builder --linux --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Overlay-Artefakte aufs Backend laden (Linux)
+        working-directory: app
+        shell: bash
+        run: |
+          for f in release/latest-linux.yml release/*.AppImage; do
+            [ -e "$f" ] || continue
+            echo "Upload $(basename "$f")"
+            curl -fsS -H "Authorization: Bearer $BF_OVERLAY_UPLOAD_TOKEN" -F "file=@$f" "$API/overlay/upload"
+          done
+        env:
+          API: https://api.ferrosaur.de
+          BF_OVERLAY_UPLOAD_TOKEN: ${{ secrets.BF_OVERLAY_UPLOAD_TOKEN }}
+
+      # Release-Notes fuers Update-Fenster BEIDER Apps. Wurde bisher nur im dev-Build
+      # erzeugt — auf Prod blieb "Was ist neu" deshalb dauerhaft leer.
+      # --require laesst den Job scheitern, wenn der CHANGELOG-Abschnitt zur Version
+      # fehlt: lieber ein roter Build als ein stiller leerer Reiter.
+      - name: Release-Notes erzeugen und hochladen
+        working-directory: app
+        shell: bash
+        run: |
+          node scripts/changelog-to-json.js --require "${VERSION}" --out releases.json
+          curl -fsS -H "Authorization: Bearer $BF_OVERLAY_UPLOAD_TOKEN" -F "file=@releases.json" "$API/overlay/upload"
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+          API: https://api.ferrosaur.de
+          BF_OVERLAY_UPLOAD_TOKEN: ${{ secrets.BF_OVERLAY_UPLOAD_TOKEN }}
+
+  # Companion-App ins SELBE Release. Wieder sequenziell nach build-linux, aus demselben
+  # Race-Grund. Der Feed ist getrennt: electron-builder.companion.yml setzt
+  # "channel: companion" -> companion.yml / companion-linux.yml statt latest.yml.
+  # Ohne den eigenen Channel wuerde das Overlay Companion-Builds als eigenes Update
+  # anbieten (beide publishen in dasselbe Repo).
+  build-companion:
+    needs: [release, build-linux]
+    if: needs.release.outputs.exists == 'false'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 1          # beide Plattformen laden in dasselbe Draft-Release
+      matrix:
+        include:
+          - os: windows-latest
+            flag: --win
+          - os: ubuntu-latest
+            flag: --linux
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Renderer bauen
+        working-directory: app
+        run: npm run build:renderer
+
+      - name: Quell-Konfiguration prüfen
+        # MUSS vor patch-prod laufen — danach steht die Produktions-URL zu Recht.
+        run: node app/scripts/check-source-config.js
+
+      - name: Produktiv-Werte setzen (appId, productName, Scheme, API-URL)
+        run: node app/scripts/patch-prod.js
+
+      - name: Companion bauen & auf GitHub Releases veröffentlichen
+        working-directory: app
+        run: npx electron-builder ${{ matrix.flag }} --config electron-builder.companion.yml --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Zusaetzlich ins eigene Backend: der Updater der Companion zieht von dort
+      # (/overlay, Kanal "companion"), nicht von GitHub. Der GitHub-Release
+      # bleibt als Ablage und weil electron-builder daraus companion.yml erzeugt.
+      # Die Release-Notes teilen sich beide Apps — releases.json laedt der
+      # Overlay-Build hoch.
+      - name: Companion-Artefakte aufs Backend laden (prod)
+        working-directory: app
+        shell: bash
+        run: |
+          for f in release-companion/companion.yml release-companion/companion-linux.yml \
+                   release-companion/*.exe release-companion/*.exe.blockmap release-companion/*.AppImage; do
+            [ -e "$f" ] || continue
+            echo "Upload $(basename "$f")"
+            curl -fsS -H "Authorization: Bearer $BF_OVERLAY_UPLOAD_TOKEN" -F "file=@$f" "$API/overlay/upload"
+          done
+        env:
+          API: https://api.ferrosaur.de
+          BF_OVERLAY_UPLOAD_TOKEN: ${{ secrets.BF_OVERLAY_UPLOAD_TOKEN }}
+
+  # Release erst live schalten, wenn BEIDE Artefakte oben liegen. Vorher stand dieser Schritt am
+  # Ende des Windows-Jobs — damit waere das Release "latest" gewesen, waehrend die AppImage noch
+  # fehlt, und der Linux-Updater liefe gegen eine 404 auf latest-linux.yml.
+  publish:
+    needs: [release, build-linux, build-companion]
+    if: needs.release.outputs.exists == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # volle Historie + Tags für den Changelog
+
+      # Changelog aus den Commits seit dem letzten Tag + Release veröffentlichen und als
+      # Latest markieren — Letztes ist entscheidend, sonst zieht der Auto-Updater es nicht.
+      - name: Changelog + Release veröffentlichen
+        shell: bash
+        run: |
+          TAG="${{ needs.release.outputs.tag }}"
+          PREV=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || echo "")
+          {
+            echo "## 📝 Änderungen"
+            echo ""
+            if [ -n "$PREV" ]; then
+              git log --no-merges --pretty=format:'- %s' "${PREV}..${TAG}"
+            else
+              git log --no-merges --pretty=format:'- %s' "${TAG}"
+            fi
+            echo ""
+            if [ -n "$PREV" ]; then
+              echo ""
+              echo "**Vollständiger Vergleich:** https://github.com/${GITHUB_REPOSITORY}/compare/${PREV}...${TAG}"
+            fi
+          } > "${RUNNER_TEMP}/notes.md"
+          gh release edit "${TAG}" \
+            --draft=false \
+            --latest \
+            --title "Ferrosaur Overlay ${TAG}" \
+            --notes-file "${RUNNER_TEMP}/notes.md"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
