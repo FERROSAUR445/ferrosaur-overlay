@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.4 — Echte Live-Positionen
+
+### ✨ Neu
+
+- Karte, Minimap und der „Bist du auf dem Server"-Status nutzen jetzt echte
+  Live-Spielerpositionen vom Isle-Server.
+
 ## v1.11.3 — Voice-Chat freigeschaltet
 
 ### ✨ Neu
