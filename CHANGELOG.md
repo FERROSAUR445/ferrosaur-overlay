@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.13 — Vitals-Waben mit Icons statt Text
+
+### 🔧 Sonstiges
+
+- Ausdauer/Essen/Durst zeigen jetzt Icons (🐾/🍖/💧) mit cyan-farbenem
+  Umriss statt Text-Label, angelehnt ans native Spiel-HUD.
+
 ## v1.11.12 — Waben wieder durchgehend verzahnt
 
 ### 🔧 Sonstiges
