@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.23 — Nährstoff-Deko-Waben entfernt
+
+### 🔧 Sonstiges
+
+- Die kleinen α/β/γ-Waben neben Essen sind raus. Sie waren rein
+  dekorativ (Kohlenhydrate/Protein/Fett liefert das Spiel per RCON
+  nicht), das sah aber aus wie kaputte/leere Anzeigen.
+
 ## v1.11.22 — Support-Button entfernt
 
 ### 🔧 Sonstiges
