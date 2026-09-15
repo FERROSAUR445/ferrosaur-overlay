@@ -867,6 +867,8 @@ async function init() {
   el('zoneUndoBtn').onclick = () => { const z = getActiveZone(); if (z) { z.points.pop(); zonesDirty = true; updateZoneInfo(); renderZoneList(); renderBigMap(); } };
   el('zoneClearBtn').onclick = () => { const z = getActiveZone(); if (z) { z.points = []; zonesDirty = true; updateZoneInfo(); renderZoneList(); renderBigMap(); } };
   el('zoneName').oninput = () => { const z = getActiveZone(); if (z) { z.name = el('zoneName').value; zonesDirty = true; renderZoneList(); if (mapOpen) renderBigMap(); } };
+  el('zoneGrowMin').oninput = () => { const z = getActiveZone(); if (z) { z.growMin = readZoneGrowInput('zoneGrowMin'); zonesDirty = true; updateZoneInfo(); } };
+  el('zoneGrowMax').oninput = () => { const z = getActiveZone(); if (z) { z.growMax = readZoneGrowInput('zoneGrowMax'); zonesDirty = true; updateZoneInfo(); } };
   el('zoneSaveBtn').onclick = () => saveZones();
   { const b = el('zonePullBtn'); if (b) b.onclick = () => pullZones(); }
 
@@ -3839,6 +3841,8 @@ function selectZone(id) {
 function syncZoneName() {
   const z = getActiveZone();
   el('zoneName').value = z ? (z.name || '') : '';
+  el('zoneGrowMin').value = (z && typeof z.growMin === 'number') ? Math.round(z.growMin * 100) : '';
+  el('zoneGrowMax').value = (z && typeof z.growMax === 'number') ? Math.round(z.growMax * 100) : '';
 }
 
 function createZone(type) {
@@ -3885,7 +3889,8 @@ function renderZoneList() {
     label.textContent = z.name || meta.label;
     const cnt = document.createElement('span');
     cnt.style.cssText = 'flex:0 0 auto;color:var(--muted);font-size:11px';
-    cnt.textContent = `${z.points.length}P`;
+    const hasGrow = typeof z.growMin === 'number' || typeof z.growMax === 'number';
+    cnt.textContent = `${hasGrow ? '🍼 ' : ''}${z.points.length}P`;
     const del = document.createElement('span');
     del.style.cssText = 'flex:0 0 auto;color:var(--muted);cursor:pointer;padding:0 2px';
     del.textContent = '✕';
@@ -3902,7 +3907,16 @@ function updateZoneInfo() {
   if (!z) { el('zoneInfo').textContent = 'Keine Zone gewählt'; return; }
   const meta = ZONE_META[z.type] || ZONE_META.pvp;
   const nm = z.name || meta.label;
-  el('zoneInfo').innerHTML = `<b style="color:${meta.color}">${meta.label}</b> · ${nm} · ${z.points.length} Punkt(e) — F6 an jeder Ecke`;
+  const grow = (typeof z.growMin === 'number' || typeof z.growMax === 'number')
+    ? ` · 🍼 ${typeof z.growMin === 'number' ? Math.round(z.growMin * 100) : 0}–${typeof z.growMax === 'number' ? Math.round(z.growMax * 100) : 100}%`
+    : '';
+  el('zoneInfo').innerHTML = `<b style="color:${meta.color}">${meta.label}</b> · ${nm} · ${z.points.length} Punkt(e)${grow} — F6 an jeder Ecke`;
+}
+function readZoneGrowInput(id) {
+  const v = (el(id).value || '').trim();
+  if (!v) return null;
+  const n = Math.max(0, Math.min(100, parseFloat(v)));
+  return isNaN(n) ? null : n / 100;
 }
 
 // Aktuelle Live-Position als Zonen-Eckpunkt aufnehmen (frische Abfrage für Präzision)
@@ -3929,7 +3943,7 @@ async function saveZones() {
     const res = await fetch(`${config.tokenBase}/zones`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ zones: ZONES.map((z) => ({ id: z.id, type: z.type, name: z.name, points: z.points })) }),
+      body: JSON.stringify({ zones: ZONES.map((z) => ({ id: z.id, type: z.type, name: z.name, points: z.points, growMin: z.growMin ?? null, growMax: z.growMax ?? null })) }),
     });
     if (res.ok) zonesDirty = false; // gespeichert → Auto-Refresh wieder erlaubt
     el('zoneInfo').innerHTML = res.ok
@@ -3953,7 +3967,7 @@ async function pullZones() {
     let added = 0;
     for (const z of server) {
       if (z.id && !have.has(z.id)) {
-        ZONES.push({ id: z.id, type: ZONE_TYPES.includes(z.type) ? z.type : 'pvp', name: z.name || '', points: Array.isArray(z.points) ? z.points : [] });
+        ZONES.push({ id: z.id, type: ZONE_TYPES.includes(z.type) ? z.type : 'pvp', name: z.name || '', points: Array.isArray(z.points) ? z.points : [], growMin: typeof z.growMin === 'number' ? z.growMin : null, growMax: typeof z.growMax === 'number' ? z.growMax : null });
         added++;
       }
     }

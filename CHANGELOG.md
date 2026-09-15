@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.9 — Wachstums-Zonen
+
+### ✨ Neu
+
+- Zonen können jetzt ein Wachstums-Fenster bekommen (z. B. Baby-Zone
+  0–25 %) — wer mit falschem Wachstum drinsteht, bekommt eine Warnung.
+
 ## v1.11.8 — Aufräumen
 
 ### 🔧 Sonstiges

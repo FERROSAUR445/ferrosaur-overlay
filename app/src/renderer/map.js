@@ -55,6 +55,8 @@ export function setZones(data) {
         type: ZONE_TYPES.includes(z.type) ? z.type : 'pvp',
         name: z.name || '',
         points: Array.isArray(z.points) ? z.points : [],
+        growMin: typeof z.growMin === 'number' ? z.growMin : null,
+        growMax: typeof z.growMax === 'number' ? z.growMax : null,
       });
     }
     return;
@@ -70,7 +72,7 @@ export function setZones(data) {
 // Neue leere Zone anlegen (Editor)
 export function newZone(type) {
   const t = ZONE_TYPES.includes(type) ? type : 'pvp';
-  const z = { id: randZoneId(), type: t, name: '', points: [] };
+  const z = { id: randZoneId(), type: t, name: '', points: [], growMin: null, growMax: null };
   ZONES.push(z);
   return z;
 }

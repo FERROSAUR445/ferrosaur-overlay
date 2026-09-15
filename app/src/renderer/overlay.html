@@ -163,6 +163,12 @@
         </div>
         <div id="zoneList" style="max-height:180px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:4px"></div>
         <input id="zoneName" placeholder="Name (optional)" style="width:100%;box-sizing:border-box;padding:7px;margin-bottom:8px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:#eee;font-size:12px">
+        <div style="color:var(--muted);margin-bottom:4px">🍼 Wachstums-Zwang (optional) — wer außerhalb steht, bekommt eine Warnung</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+          <input id="zoneGrowMin" type="number" min="0" max="100" placeholder="Min %" style="width:0;flex:1;box-sizing:border-box;padding:7px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:#eee;font-size:12px">
+          <span style="color:var(--muted)">–</span>
+          <input id="zoneGrowMax" type="number" min="0" max="100" placeholder="Max %" style="width:0;flex:1;box-sizing:border-box;padding:7px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:#eee;font-size:12px">
+        </div>
         <div id="zoneInfo" style="color:var(--muted);margin-bottom:8px">Keine Zone gewählt</div>
         <div style="display:flex;gap:6px">
           <button id="zoneAddBtn" style="flex:1;padding:8px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer">＋ Punkt (F6)</button>
