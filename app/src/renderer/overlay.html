@@ -29,7 +29,7 @@
   <!-- Part 3b: Lebensanzeige — Wabenfeld, füllt/leert sich nach Vital-Wert. Permanent, verschiebbar + skalierbar.
        6 Waben wie das Standard-HUD des Spiels: HP/Rate/Grow oben, Ausdauer/Essen/Durst unten. -->
   <div id="hudHeart" title="HP · Grow-Rate · Grow · Ausdauer · Essen · Durst">
-    <svg viewBox="0 0 250 256" aria-hidden="true">
+    <svg viewBox="0 0 250 365" aria-hidden="true">
       <defs>
         <linearGradient id="ghGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
@@ -86,24 +86,27 @@
       <polygon points="164.8,83 204.6,106 204.6,152 164.8,175 125,152 125,106" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
       <text id="growVal" x="164.8" y="132" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">—</text>
       <text x="164.8" y="150" text-anchor="middle" font-size="8" font-weight="700" fill="#e9e0c4" letter-spacing="1">GROW</text>
+      <!-- Zweite Waben-Gruppe, eigenes Dreieck wie oben (Essen oben mittig, Ausdauer/Durst
+           unten links/rechts) - bewusst NICHT mit der oberen Gruppe verzahnt, mit Abstand
+           darunter, genau wie die zwei getrennten Wabengruppen im Spiel-HUD. -->
+      <!-- ESSEN/HUNGER (oben mittig der unteren Gruppe) -->
+      <polygon points="125,190 164.8,213 164.8,259 125,282 85.2,259 85.2,213" fill="rgba(8,5,18,0.55)"/>
+      <polygon points="125,190 164.8,213 164.8,259 125,282 85.2,259 85.2,213" fill="url(#gnGrad)"/>
+      <polygon points="125,190 164.8,213 164.8,259 125,282 85.2,259 85.2,213" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
+      <text id="hungerVal" x="125" y="239" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
+      <text x="125" y="257" text-anchor="middle" font-size="7.5" font-weight="700" fill="#e9e0c4" letter-spacing="0.3">ESSEN</text>
       <!-- AUSDAUER (unten links) -->
-      <polygon points="45.4,152 85.2,175 85.2,221 45.4,244 5.6,221 5.6,175" fill="rgba(8,5,18,0.55)"/>
-      <polygon points="45.4,152 85.2,175 85.2,221 45.4,244 5.6,221 5.6,175" fill="url(#gsGrad)"/>
-      <polygon points="45.4,152 85.2,175 85.2,221 45.4,244 5.6,221 5.6,175" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
-      <text id="staminaVal" x="45.4" y="201" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
-      <text x="45.4" y="219" text-anchor="middle" font-size="7.5" font-weight="700" fill="#e9e0c4" letter-spacing="0.3">AUSD.</text>
-      <!-- ESSEN/HUNGER (unten mitte) -->
-      <polygon points="125,152 164.8,175 164.8,221 125,244 85.2,221 85.2,175" fill="rgba(8,5,18,0.55)"/>
-      <polygon points="125,152 164.8,175 164.8,221 125,244 85.2,221 85.2,175" fill="url(#gnGrad)"/>
-      <polygon points="125,152 164.8,175 164.8,221 125,244 85.2,221 85.2,175" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
-      <text id="hungerVal" x="125" y="201" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
-      <text x="125" y="219" text-anchor="middle" font-size="7.5" font-weight="700" fill="#e9e0c4" letter-spacing="0.3">ESSEN</text>
+      <polygon points="85.2,259 125,282 125,328 85.2,351 45.4,328 45.4,282" fill="rgba(8,5,18,0.55)"/>
+      <polygon points="85.2,259 125,282 125,328 85.2,351 45.4,328 45.4,282" fill="url(#gsGrad)"/>
+      <polygon points="85.2,259 125,282 125,328 85.2,351 45.4,328 45.4,282" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
+      <text id="staminaVal" x="85.2" y="308" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
+      <text x="85.2" y="326" text-anchor="middle" font-size="7.5" font-weight="700" fill="#e9e0c4" letter-spacing="0.3">AUSD.</text>
       <!-- DURST (unten rechts) -->
-      <polygon points="204.6,152 244.4,175 244.4,221 204.6,244 164.8,221 164.8,175" fill="rgba(8,5,18,0.55)"/>
-      <polygon points="204.6,152 244.4,175 244.4,221 204.6,244 164.8,221 164.8,175" fill="url(#gdGrad)"/>
-      <polygon points="204.6,152 244.4,175 244.4,221 204.6,244 164.8,221 164.8,175" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
-      <text id="thirstVal" x="204.6" y="201" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
-      <text x="204.6" y="219" text-anchor="middle" font-size="7.5" font-weight="700" fill="#e9e0c4" letter-spacing="0.3">DURST</text>
+      <polygon points="164.8,259 204.6,282 204.6,328 164.8,351 125,328 125,282" fill="rgba(8,5,18,0.55)"/>
+      <polygon points="164.8,259 204.6,282 204.6,328 164.8,351 125,328 125,282" fill="url(#gdGrad)"/>
+      <polygon points="164.8,259 204.6,282 204.6,328 164.8,351 125,328 125,282" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
+      <text id="thirstVal" x="164.8" y="308" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
+      <text x="164.8" y="326" text-anchor="middle" font-size="7.5" font-weight="700" fill="#e9e0c4" letter-spacing="0.3">DURST</text>
     </svg>
   </div>
 

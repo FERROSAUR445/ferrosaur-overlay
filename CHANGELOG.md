@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.11 — Waben-Anordnung korrigiert
+
+### 🔧 Sonstiges
+
+- Ausdauer/Essen/Durst bilden jetzt eine eigene zweite Dreiecks-Gruppe
+  (wie im Spiel-HUD), statt mit HP/Rate/Grow zu einer Wabe zu verschmelzen.
+
 ## v1.11.10 — Erweiterte Vitals-Anzeige
 
 ### ✨ Neu
