@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.15 — Sprecher-Box umsortiert
+
+### 🔧 Sonstiges
+
+- Die 🔊-Sprecher-Box steht jetzt direkt unter „Reichweite", vor der
+  Zonen-Anzeige.
+
 ## v1.11.14 — Sprech-Anzeige in der Teilnehmerliste
 
 ### ✨ Neu
