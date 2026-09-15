@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.19 — Kleine α/β/γ-Naehrstoff-Waben ergänzt
+
+### ✨ Neu
+
+- 3 kleine Deko-Waben (α/β/γ) oben rechts an der Essen-Wabe, wie im
+  Referenzbild. Rein optisch — RCON liefert keine Nährstoff-Werte,
+  deshalb ohne Füllung/Prozentzahl, nur Umriss + Symbol.
+
 ## v1.11.18 — Vitals-Waben als Dreieck (wie Referenzbild)
 
 ### 🔧 Sonstiges
