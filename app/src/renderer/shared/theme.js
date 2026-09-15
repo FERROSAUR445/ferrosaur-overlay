@@ -10,7 +10,7 @@
 // ueber Optionen herein (setVars/storage). Nur so ist die Ableitungslogik
 // testbar, ohne einen Browser hochzufahren.
 
-// min = Mindest-Abo-Rang (0 Fossil · 1 Knochen · 2 Bernstein · 3 Obsidian).
+// min = Mindest-Abo-Rang (0 FERROSAUR · 1 Knochen · 2 Bernstein · 3 Obsidian).
 export const THEMES = {
   violett: { name: 'Violett', min: 0, accent: '#8b5cf6', accent2: '#a78bfa', accentD: '#7c3aed', border: 'rgba(139,92,246,0.32)', rgb: '139,92,246', panel: 'rgba(20,13,38,0.82)', inputBg: '#160d28' },
   blau:    { name: 'Blau',    min: 1, accent: '#3b82f6', accent2: '#60a5fa', accentD: '#2563eb', border: 'rgba(59,130,246,0.32)', rgb: '59,130,246', panel: 'rgba(12,18,38,0.82)', inputBg: '#0c1426' },
@@ -21,7 +21,7 @@ export const THEMES = {
   pink:    { name: 'Pink',    min: 2, accent: '#ec4899', accent2: '#f472b6', accentD: '#db2777', border: 'rgba(236,72,153,0.32)', rgb: '236,72,153', panel: 'rgba(34,12,26,0.84)', inputBg: '#1e0c18' },
 };
 
-export const ABO_ORDER = ['Fossil', 'Knochen', 'Bernstein', 'Obsidian'];
+export const ABO_ORDER = ['FERROSAUR', 'Knochen', 'Bernstein', 'Obsidian'];
 export const DEFAULT_THEME = 'violett';
 export const CUSTOM_HEX_FALLBACK = '#8b5cf6';
 
@@ -35,7 +35,7 @@ export function aboIndex(tier) {
 // schon anwendet (setAboTier bei team||admin → Obsidian).
 export function effectiveTier(token = {}) {
   if (token.team || token.admin) return 'Obsidian';
-  return ABO_ORDER.includes(token.aboTier) ? token.aboTier : 'Fossil';
+  return ABO_ORDER.includes(token.aboTier) ? token.aboTier : 'FERROSAUR';
 }
 
 // Defensiv: aus localStorage kann Unsinn kommen (oder ein alter 3-stelliger
@@ -126,7 +126,7 @@ export function makeTheme(opts = {}) {
   const setVars = opts.setVars || domSetVars;
   const onApply = opts.onApply || (() => {});
 
-  let tier = 'Fossil';
+  let tier = 'FERROSAUR';
   let current = store.getItem(storageKey) || DEFAULT_THEME;
 
   const unlocked = (key) => (key === 'custom'
@@ -147,7 +147,7 @@ export function makeTheme(opts = {}) {
   };
 
   // persist nur bei ausdruecklicher Nutzer-Wahl: faellt der Rang beim Start
-  // noch auf Fossil zurueck, darf das die gespeicherte Praeferenz nicht
+  // noch auf FERROSAUR zurueck, darf das die gespeicherte Praeferenz nicht
   // ueberschreiben — sonst ist sie weg, sobald /token einmal langsam ist.
   function apply(key, persist) {
     if (!unlocked(key)) key = DEFAULT_THEME;
@@ -164,7 +164,7 @@ export function makeTheme(opts = {}) {
     // Rang nachreichen, sobald /token da ist, und die gespeicherte Wahl
     // erneut anwenden — beim ersten Aufruf war der Rang noch unbekannt.
     setTier(next) {
-      tier = ABO_ORDER.includes(next) ? next : 'Fossil';
+      tier = ABO_ORDER.includes(next) ? next : 'FERROSAUR';
       return apply(store.getItem(storageKey) || DEFAULT_THEME);
     },
     setFromToken(token) { return this.setTier(effectiveTier(token)); },

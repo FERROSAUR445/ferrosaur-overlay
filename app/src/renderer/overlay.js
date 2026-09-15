@@ -35,7 +35,7 @@ const applyTheme = (key, persist) => bfTheme.apply(key, persist);
 function setAboTier(tier) {
   bfTheme.setTier(tier);
   // Picker IMMER neu rendern, sobald der Rang da ist — sonst zeigen Schlösser + fehlender
-  // Color-Input den veralteten Fossil-Stand (Settings ist ein eigenes Panel, nie featureOpen).
+  // Color-Input den veralteten FERROSAUR-Stand (Settings ist ein eigenes Panel, nie featureOpen).
   renderThemePicker();
 }
 function renderThemePicker() {
@@ -476,9 +476,9 @@ function enqueueServerToasts(list) {
 }
 
 // ── Top-HUD (Name / Tier / Punkte) ───────────────────────────────────────────
-let myTier = 'Fossil';
+let myTier = 'FERROSAUR';
 function setTier(tier) {
-  myTier = tier || 'Fossil';
+  myTier = tier || 'FERROSAUR';
   const b = document.getElementById('hudTier');
   if (b) { b.textContent = myTier; b.className = 'tier-badge tier-' + myTier; }
 }
@@ -4267,7 +4267,7 @@ function toggleFeature(id) {
   updateInteractive();
 }
 function closeAllFeatures(skipInteractive) {
-  // Fossil: unbestätigte Live-Vorschau beim Schließen des Skin-Editors zurücksetzen.
+  // FERROSAUR: unbestätigte Live-Vorschau beim Schließen des Skin-Editors zurücksetzen.
   if (featureOpen === 'skinEditor' && skinPays && skinPreviewed && !skinConfirmed) {
     revertSkinPreview();
     showToast('🎨 Vorschau verworfen — Skin zurückgesetzt', '');
@@ -4667,7 +4667,7 @@ function renderProfile() {
           <div style="min-width:0">
             <div class="pf-nm">${escapeHtml(d.name || '?')}</div>
             <div style="display:flex;gap:6px;align-items:center;margin-top:5px;flex-wrap:wrap">
-              <span class="tier-badge tier-${d.tier || 'Fossil'}">${escapeHtml(d.tier || 'Fossil')}</span>
+              <span class="tier-badge tier-${d.tier || 'FERROSAUR'}">${escapeHtml(d.tier || 'FERROSAUR')}</span>
               <span style="font-size:12px;color:var(--muted)">${d.online ? '🟢 Online' : '⚫ Offline'}</span>
             </div>
           </div>
@@ -5934,8 +5934,8 @@ const SKIN_GROUPS = [
 ];
 let skinState = null;
 let skinPays = false;       // Free (myAboIdx<1) zahlt + nicht-live; ab Knochen live & gratis
-let skinConfirmed = false;  // Fossil-Vorschau: wurde „Bestätigen" gedrückt? (sonst Reset beim Schließen)
-let skinPreviewed = false;  // Fossil: läuft gerade eine unbestätigte Live-Vorschau?
+let skinConfirmed = false;  // FERROSAUR-Vorschau: wurde „Bestätigen" gedrückt? (sonst Reset beim Schließen)
+let skinPreviewed = false;  // FERROSAUR: läuft gerade eine unbestätigte Live-Vorschau?
 let zombieTimer = null;
 let skinTpl = { templates: [], limit: 0, used: 0, free: true, costs: { color: 50, tplSave: 500, tplApply: 250 } };
 function linToHex(rgb) { if (!rgb) return '#888888'; const h = (v) => ('0' + gc(v).toString(16)).slice(-2); return '#' + h(rgb[0]) + h(rgb[1]) + h(rgb[2]); }
@@ -5988,7 +5988,7 @@ async function renderSkinEditor() {
   skinState = { skinVariation: sk.skinVariation || 0, patternIndex: sk.patternIndex || 0, themeIndex: sk.themeIndex || 0, gender: me.gender === 'Female' ? 'Female' : 'Male', colors: {} };
   for (const [k] of SKIN_GROUPS) skinState.colors[k] = (sk.colors && sk.colors[k]) ? sk.colors[k] : [0.5, 0.5, 0.5];
   setSkinBaseline();
-  skinPays = !mySkinFree;                    // Free (Fossil) = gratis Live-Vorschau + „Bestätigen" zahlt; ab Knochen/Beta-Tester live & gratis
+  skinPays = !mySkinFree;                    // Free (FERROSAUR) = gratis Live-Vorschau + „Bestätigen" zahlt; ab Knochen/Beta-Tester live & gratis
   skinConfirmed = false; skinPreviewed = false;   // neue Editier-Sitzung: nichts bestätigt/vorschau
   const obsidian = myAboIdx() >= 3;
   // Quick-Fix: GENDER_SWAP_DISABLED schlägt Rang UND Event → für niemanden anklickbar.
@@ -6059,7 +6059,7 @@ async function renderSkinEditor() {
   if (skinPays) el('skApply').onclick = () => commitSkin();
   loadSkinTemplates();
   updateSkinPreview();
-  // Fossil: Live-Vorschau (gratis) nach kurzer Pause + Kosten-Button aktualisieren. Ab Knochen: live-commit.
+  // FERROSAUR: Live-Vorschau (gratis) nach kurzer Pause + Kosten-Button aktualisieren. Ab Knochen: live-commit.
   const onEdit = () => { if (skinPays) { updateApplyCost(); scheduleSkinPreview(); } else scheduleSkinApply(); };
   panel.querySelectorAll('[data-col]').forEach((inp) => inp.oninput = () => { skinState.colors[inp.dataset.col] = hexToLin(inp.value); updateSkinPreview(); onEdit(); });
   panel.querySelectorAll('[data-pat]').forEach((b) => b.onclick = () => { skinState.patternIndex = parseInt(b.dataset.pat); panel.querySelectorAll('[data-pat]').forEach((x) => x.className = x === b ? '' : 'secondary'); onEdit(); });
@@ -6119,7 +6119,7 @@ function scheduleSkinApply() {
   skinApplyTimer = setTimeout(() => applySkin(true), 650);
 }
 
-// ── Fossil: gratis Live-Vorschau → „Bestätigen" (zahlt) / Schließen-ohne-Bestätigen = Reset ──
+// ── FERROSAUR: gratis Live-Vorschau → „Bestätigen" (zahlt) / Schließen-ohne-Bestätigen = Reset ──
 let skinPreviewTimer = null;
 function scheduleSkinPreview() {
   clearTimeout(skinPreviewTimer);

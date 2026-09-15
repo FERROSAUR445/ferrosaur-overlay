@@ -125,19 +125,19 @@ eq(themeFromHex(null).accent, '#8b5cf6', 'null faellt auf Standard zurueck');
 eq(hexToRgb('#ffffff').join(','), '255,255,255', 'hexToRgb Weiss');
 
 // Staff bekommt alles frei, unabhaengig vom Abo — Kosmetik ist kein Werkzeug-Gate.
-eq(effectiveTier({ team: true, aboTier: 'Fossil' }), 'Obsidian', 'Team => Obsidian');
+eq(effectiveTier({ team: true, aboTier: 'FERROSAUR' }), 'Obsidian', 'Team => Obsidian');
 eq(effectiveTier({ admin: true }), 'Obsidian', 'Admin => Obsidian');
 eq(effectiveTier({ aboTier: 'Bernstein' }), 'Bernstein', 'Spieler behaelt sein Abo');
-eq(effectiveTier({ aboTier: null }), 'Fossil', 'kein Abo => Fossil');
-eq(effectiveTier({ aboTier: 'Erfunden' }), 'Fossil', 'unbekannter Rang => Fossil');
+eq(effectiveTier({ aboTier: null }), 'FERROSAUR', 'kein Abo => FERROSAUR');
+eq(effectiveTier({ aboTier: 'Erfunden' }), 'FERROSAUR', 'unbekannter Rang => FERROSAUR');
 
 // Gating und Speicherung
 const mem = () => { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)) }; };
 const store = mem();
 const th = makeTheme({ storage: store, setVars: () => {} });
 eq(th.unlocked('violett'), true, 'Violett ist immer frei');
-eq(th.unlocked('gold'), false, 'Gold gesperrt fuer Fossil');
-eq(th.unlocked('custom'), false, 'eigene Farbe gesperrt fuer Fossil');
+eq(th.unlocked('gold'), false, 'Gold gesperrt fuer FERROSAUR');
+eq(th.unlocked('custom'), false, 'eigene Farbe gesperrt fuer FERROSAUR');
 th.apply('gold', true);
 eq(th.current(), 'violett', 'gesperrtes Theme faellt auf Violett zurueck');
 th.setFromToken({ admin: true });

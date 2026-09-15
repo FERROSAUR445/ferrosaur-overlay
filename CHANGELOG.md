@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+## v1.11.25 — Standard-Rang heißt jetzt FERROSAUR
+
+### 🔧 Sonstiges
+
+- Der Standard-Rang (ohne Abo) heißt jetzt "FERROSAUR" statt "Fossil".
+
 ## v1.11.24 — Lebensanzeige: jede Wabe einzeln anpassbar
 
 ### 🔧 Sonstiges
