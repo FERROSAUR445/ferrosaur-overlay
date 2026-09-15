@@ -7,7 +7,7 @@
 
 ## [Unreleased]
 
-## v1.11.21 — Support-Button entfernt
+## v1.11.22 — Support-Button entfernt
 
 ### 🔧 Sonstiges
 
