@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.10 — Erweiterte Vitals-Anzeige
+
+### ✨ Neu
+
+- Die HP/Grow-Waben oben links zeigen jetzt zusätzlich Ausdauer, Essen
+  und Durst — 6 Waben statt 3, wie das Standard-Spiel-HUD.
+
 ## v1.11.9 — Wachstums-Zonen
 
 ### ✨ Neu

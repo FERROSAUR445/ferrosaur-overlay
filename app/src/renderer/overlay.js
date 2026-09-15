@@ -526,6 +526,16 @@ function updateHeart(d) {
   const hcol = !online ? gray : hp > 50 ? '#22c55e' : hp > 25 ? '#f59e0b' : '#ef4444';
   setHex(hp / 100, hcol, 'ghE1', 'ghF1', 'ghF2');
   { const v = document.getElementById('heartVal'); if (v) v.textContent = online ? (typeof d.healthCur === 'number' ? String(Math.round(d.healthCur)) : hp + '%') : '—'; }
+  // AUSDAUER/ESSEN/DURST - wie das Standard-HUD des Spiels, zusaetzlich zu HP/Rate/Grow.
+  const stamina = online && typeof d.stamina === 'number' ? Math.max(0, Math.min(1, d.stamina)) : 0;
+  setHex(stamina, online ? '#eab308' : gray, 'gsE1', 'gsF1', 'gsF2');
+  { const v = document.getElementById('staminaVal'); if (v) v.textContent = online ? Math.round(stamina * 100) + '%' : '—'; }
+  const hunger = online && typeof d.hunger === 'number' ? Math.max(0, Math.min(1, d.hunger)) : 0;
+  setHex(hunger, online ? '#f97316' : gray, 'gnE1', 'gnF1', 'gnF2');
+  { const v = document.getElementById('hungerVal'); if (v) v.textContent = online ? Math.round(hunger * 100) + '%' : '—'; }
+  const thirst = online && typeof d.thirst === 'number' ? Math.max(0, Math.min(1, d.thirst)) : 0;
+  setHex(thirst, online ? '#3b82f6' : gray, 'gdE1', 'gdF1', 'gdF2');
+  { const v = document.getElementById('thirstVal'); if (v) v.textContent = online ? Math.round(thirst * 100) + '%' : '—'; }
 }
 // ── Kompass (verschiebbarer Balken oben) ────────────────────────────────────
 // Himmelsrichtungen (N rot) + Wegpunkt 📍 + Golden-Zone ⭐ + Gruppenmitglieder (Kartenfarben)
