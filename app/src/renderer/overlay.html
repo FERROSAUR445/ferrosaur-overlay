@@ -28,20 +28,14 @@
 
   <!-- Part 3b: Lebensanzeige — Wabenfeld, füllt/leert sich nach Vital-Wert. Permanent, verschiebbar + skalierbar.
        6 Waben wie das Standard-HUD des Spiels: HP/Rate/Grow oben, Ausdauer/Essen/Durst unten. -->
-  <div id="hudHeart" title="HP · Grow-Rate · Grow · Ausdauer · Essen · Durst">
-    <svg viewBox="0 0 250 325" aria-hidden="true">
+  <div id="hudHeart" title="HP · Grow · Ausdauer · Essen · Durst">
+    <svg viewBox="0 83 250 242" aria-hidden="true">
       <defs>
         <linearGradient id="ghGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
           <stop id="ghE1" offset="1" stop-color="rgba(255,255,255,0.10)"/>
           <stop id="ghF1" offset="1" stop-color="#ef4444"/>
           <stop id="ghF2" offset="1" stop-color="#ef4444"/>
-        </linearGradient>
-        <linearGradient id="grGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
-          <stop id="grE1" offset="1" stop-color="rgba(255,255,255,0.10)"/>
-          <stop id="grF1" offset="1" stop-color="#e7cf7a"/>
-          <stop id="grF2" offset="1" stop-color="#e7cf7a"/>
         </linearGradient>
         <linearGradient id="ggGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
@@ -68,18 +62,12 @@
           <stop id="gdF2" offset="1" stop-color="#3b82f6"/>
         </linearGradient>
       </defs>
-      <!-- HP (oben mittig) -->
-      <polygon points="125,14 164.8,37 164.8,83 125,106 85.2,83 85.2,37" fill="rgba(8,5,18,0.55)"/>
-      <polygon points="125,14 164.8,37 164.8,83 125,106 85.2,83 85.2,37" fill="url(#ghGrad)"/>
-      <polygon points="125,14 164.8,37 164.8,83 125,106 85.2,83 85.2,37" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
-      <text id="heartVal" x="125" y="63" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">—</text>
-      <text x="125" y="81" text-anchor="middle" font-size="8.5" font-weight="700" fill="#f3d6d2" letter-spacing="1.5">HP</text>
-      <!-- GROW-RATE (mitte links) -->
+      <!-- HP (jetzt auf gleicher Ebene wie Grow, ehemals Rate-Position; Rate komplett entfernt) -->
       <polygon points="85.2,83 125,106 125,152 85.2,175 45.4,152 45.4,106" fill="rgba(8,5,18,0.55)"/>
-      <polygon points="85.2,83 125,106 125,152 85.2,175 45.4,152 45.4,106" fill="url(#grGrad)"/>
+      <polygon points="85.2,83 125,106 125,152 85.2,175 45.4,152 45.4,106" fill="url(#ghGrad)"/>
       <polygon points="85.2,83 125,106 125,152 85.2,175 45.4,152 45.4,106" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
-      <text id="rateVal" x="85.2" y="132" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
-      <text x="85.2" y="149" text-anchor="middle" font-size="7.5" font-weight="700" fill="#e9e0c4" letter-spacing="0.3">RATE</text>
+      <text id="heartVal" x="85.2" y="132" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">—</text>
+      <text x="85.2" y="150" text-anchor="middle" font-size="8.5" font-weight="700" fill="#f3d6d2" letter-spacing="1.5">HP</text>
       <!-- GROW (mitte rechts) -->
       <polygon points="164.8,83 204.6,106 204.6,152 164.8,175 125,152 125,106" fill="rgba(8,5,18,0.55)"/>
       <polygon points="164.8,83 204.6,106 204.6,152 164.8,175 125,152 125,106" fill="url(#ggGrad)"/>

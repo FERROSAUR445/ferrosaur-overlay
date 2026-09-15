@@ -516,17 +516,12 @@ function updateHeart(d) {
   const grow = online && typeof d.grow === 'number' ? Math.max(0, Math.min(1, d.grow)) : 0;
   setHex(grow, online ? '#8fae54' : gray, 'ggE1', 'ggF1', 'ggF2');
   { const v = document.getElementById('growVal'); if (v) v.textContent = online ? fmtGrow(grow) : '—'; }
-  // GROW-RATE = Σ Nährstoffe (0..3) → Anzeige 0..300 %, Füllung /3.
-  // Ab 75 % Grow stoppt das Wachstum (Adult) → Rate auf 0.
-  const nut = (online && grow <= 0.75) ? ((d.carbs || 0) + (d.protein || 0) + (d.lipid || 0)) : 0;
-  setHex(nut / 3, online ? '#e7cf7a' : gray, 'grE1', 'grF1', 'grF2');
-  { const v = document.getElementById('rateVal'); if (v) v.textContent = online ? Math.round(nut * 100) + '%' : '—'; }
   // HP (Farbe nach Höhe). Füllung = Fraktion (%), Text = absoluter Current-Wert. [BFT-179]
   const hp = online && typeof d.health === 'number' ? Math.max(0, Math.min(100, Math.round(d.health * 100))) : 0;
   const hcol = !online ? gray : hp > 50 ? '#22c55e' : hp > 25 ? '#f59e0b' : '#ef4444';
   setHex(hp / 100, hcol, 'ghE1', 'ghF1', 'ghF2');
   { const v = document.getElementById('heartVal'); if (v) v.textContent = online ? (typeof d.healthCur === 'number' ? String(Math.round(d.healthCur)) : hp + '%') : '—'; }
-  // AUSDAUER/ESSEN/DURST - wie das Standard-HUD des Spiels, zusaetzlich zu HP/Rate/Grow.
+  // AUSDAUER/ESSEN/DURST - wie das Standard-HUD des Spiels, zusaetzlich zu HP/Grow.
   const stamina = online && typeof d.stamina === 'number' ? Math.max(0, Math.min(1, d.stamina)) : 0;
   setHex(stamina, online ? '#eab308' : gray, 'gsE1', 'gsF1', 'gsF2');
   { const v = document.getElementById('staminaVal'); if (v) v.textContent = online ? Math.round(stamina * 100) + '%' : '—'; }

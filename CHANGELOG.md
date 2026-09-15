@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.20 — Rate-Wabe entfernt, HP auf Grow-Ebene
+
+### 🔧 Sonstiges
+
+- Die Rate-Wabe (Nährstoffsumme) ist raus. HP steht jetzt auf
+  derselben Ebene wie Grow, statt oben zentriert zu stehen.
+
 ## v1.11.19 — Kleine α/β/γ-Naehrstoff-Waben ergänzt
 
 ### ✨ Neu
