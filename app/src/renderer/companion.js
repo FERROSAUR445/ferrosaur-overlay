@@ -75,9 +75,9 @@ let userDir = new Map();
 let zoom = 1, panX = 0, panY = 0;
 let teleports = [];
 let encounters = [];
-let showTp = localStorage.getItem('bf-cp-tp') !== '0';
-let showAi = localStorage.getItem('bf-cp-ai') !== '0';
-let showHeat = localStorage.getItem('bf-cp-heat') === '1';
+let showTp = localStorage.getItem('frr-cp-tp') !== '0';
+let showAi = localStorage.getItem('frr-cp-ai') !== '0';
+let showHeat = localStorage.getItem('frr-cp-heat') === '1';
 const MAX_ZOOM = 15;
 
 // Die Canvas fuellt den verfuegbaren Bereich; das Kartenbild ist quadratisch.
@@ -97,8 +97,8 @@ let dirty = true;             // Dirty-Flag: neu zeichnen nur bei Poll oder Pan/
 // Steht bewusst NACH `dirty`: onApply schreibt hinein, und der erste Aufruf
 // erfolgt sofort, damit beim Start kein Violett-Blitz zu sehen ist.
 const theme = makeTheme({
-  storageKey: 'bf-cp-theme',
-  customKey: 'bf-cp-custom',
+  storageKey: 'frr-cp-theme',
+  customKey: 'frr-cp-custom',
   // Nur neu zeichnen: die Markerfarben der Karte sind bewusst theme-fest
   // (siehe map.js), aber der Rahmen drumherum haengt am Akzent.
   onApply: () => { dirty = true; },
@@ -106,8 +106,8 @@ const theme = makeTheme({
 theme.apply(theme.current());
 // Aus der localStorage wiederhergestellt, aber nach dem Login gegen die Rechte
 // geprueft — sonst behielte ein herabgestufter Staff seine Overwatch-Ansicht.
-let showAll = localStorage.getItem('bf-cp-showall') === '1';
-let labelMinZoom = Number(localStorage.getItem('bf-cp-labelzoom') || 1.6);
+let showAll = localStorage.getItem('frr-cp-showall') === '1';
+let labelMinZoom = Number(localStorage.getItem('frr-cp-labelzoom') || 1.6);
 let lastStat = { total: 0, drawn: 0, belowZoom: false };
 let hits = [];                    // Cluster aus dem letzten Zeichnen (Karten-Koordinaten)
 let highlight = new Set();        // dauerhaft hervorgehoben (Spielerliste)
@@ -137,7 +137,7 @@ const TRAIL_TIERS = [
 const TRAIL_MAX_AGE = TRAIL_TIERS[TRAIL_TIERS.length - 1].maxAge;
 const trails = new Map();         // steamId -> [{x,y,t}, …]
 let pollTick = 0;                 // Abfragezaehler als Zeitbasis
-let showTrails = localStorage.getItem('bf-cp-trail') === '1';
+let showTrails = localStorage.getItem('frr-cp-trail') === '1';
 
 // Behalten? Punkt bleibt, wenn er im Raster seiner Altersstufe liegt.
 function trailKeep(age, t) {
@@ -1089,7 +1089,7 @@ function renderLegend() {
       const on = b.getAttribute('aria-pressed') !== 'true';
       press(b, on);
       setZoneLayer(b.dataset.zone, on);
-      localStorage.setItem('bf-cp-zone-' + b.dataset.zone, on ? '1' : '0');
+      localStorage.setItem('frr-cp-zone-' + b.dataset.zone, on ? '1' : '0');
       dirty = true;
     };
   });
@@ -1098,21 +1098,21 @@ function renderLegend() {
       const k = b.dataset.marker;
       const on = b.getAttribute('aria-pressed') !== 'true';
       press(b, on);
-      if (k === 'tp') { showTp = on; localStorage.setItem('bf-cp-tp', on ? '1' : '0'); }
-      else if (k === 'ai') { showAi = on; localStorage.setItem('bf-cp-ai', on ? '1' : '0'); }
+      if (k === 'tp') { showTp = on; localStorage.setItem('frr-cp-tp', on ? '1' : '0'); }
+      else if (k === 'ai') { showAi = on; localStorage.setItem('frr-cp-ai', on ? '1' : '0'); }
       else if (k === 'trail') {
         showTrails = on;
-        localStorage.setItem('bf-cp-trail', on ? '1' : '0');
+        localStorage.setItem('frr-cp-trail', on ? '1' : '0');
         if (!on) trails.clear();
       }
       else if (k === 'heat') {
         showHeat = on;
-        localStorage.setItem('bf-cp-heat', on ? '1' : '0');
+        localStorage.setItem('frr-cp-heat', on ? '1' : '0');
         // Die uebrigen Marker sind im Heatmap-Modus wirkungslos — sperren,
         // statt sie anklickbar zu lassen und nichts zu tun.
         renderLegend();
       }
-      else { showAll = on; localStorage.setItem('bf-cp-showall', on ? '1' : '0'); }
+      else { showAll = on; localStorage.setItem('frr-cp-showall', on ? '1' : '0'); }
       dirty = true;
     };
   });
@@ -1121,7 +1121,7 @@ function renderLegend() {
 // Gespeicherte Layer-Zustaende beim Start in map.js zurueckspielen.
 function restoreZonePrefs() {
   for (const k of Object.keys(ZONE_LAYERS)) {
-    const v = localStorage.getItem('bf-cp-zone-' + k);
+    const v = localStorage.getItem('frr-cp-zone-' + k);
     if (v !== null) setZoneLayer(k, v === '1');
   }
 }
@@ -1154,7 +1154,7 @@ function navTo(view) {
     try { render(el('cpPanelView')); }
     catch (err) { toast('Panel-Fehler: ' + err.message, 'error'); }
   }
-  localStorage.setItem('bf-cp-view', view);
+  localStorage.setItem('frr-cp-view', view);
 }
 
 // ── Start ──────────────────────────────────────────────────────────────────
@@ -1225,7 +1225,7 @@ async function boot() {
   lz.oninput = () => {
     labelMinZoom = Number(lz.value);
     el('cpLabelZoomVal').textContent = labelMinZoom.toFixed(1) + '×';
-    localStorage.setItem('bf-cp-labelzoom', String(labelMinZoom));
+    localStorage.setItem('frr-cp-labelzoom', String(labelMinZoom));
     dirty = true;
   };
   el('cpMapReset').onclick = resetView;
@@ -1291,7 +1291,7 @@ async function boot() {
     if (isDrawingPatrol()) { stopDrawingPatrol(); dirty = true; return; }
     if (isPlacing()) cancelPlacing();
   });
-  navTo(localStorage.getItem('bf-cp-view') || 'map');
+  navTo(localStorage.getItem('frr-cp-view') || 'map');
   initMapInteraction();
   resizeCanvas();
   resetView();

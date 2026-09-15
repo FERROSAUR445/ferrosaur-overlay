@@ -145,25 +145,25 @@ eq(th.unlocked('gold'), true, 'nach Rang-Update ist Gold frei');
 eq(th.unlocked('custom'), true, 'nach Rang-Update ist die eigene Farbe frei');
 th.apply('gold', true);
 eq(th.current(), 'gold', 'Gold laesst sich nun waehlen');
-eq(store.getItem('bf-theme'), 'gold', 'Wahl wurde gespeichert');
+eq(store.getItem('frr-theme'), 'gold', 'Wahl wurde gespeichert');
 
 // Der Rueckfall darf die gespeicherte Praeferenz NICHT ueberschreiben: sonst
 // ist sie weg, sobald /token beim Start einmal langsam ist.
 const store2 = mem();
-store2.setItem('bf-theme', 'gold');
+store2.setItem('frr-theme', 'gold');
 const th2 = makeTheme({ storage: store2, setVars: () => {} });
 eq(th2.current(), 'violett', 'ohne Rang zunaechst Violett');
-eq(store2.getItem('bf-theme'), 'gold', 'gespeicherte Wahl bleibt erhalten');
+eq(store2.getItem('frr-theme'), 'gold', 'gespeicherte Wahl bleibt erhalten');
 th2.setFromToken({ team: true });
 eq(th2.current(), 'gold', 'nach Rang-Update greift die gespeicherte Wahl');
 
 // Getrennte Schluessel pro App
 const store3 = mem();
-const th3 = makeTheme({ storage: store3, storageKey: 'bf-cp-theme', customKey: 'bf-cp-custom', setVars: () => {} });
+const th3 = makeTheme({ storage: store3, storageKey: 'frr-cp-theme', customKey: 'frr-cp-custom', setVars: () => {} });
 th3.setFromToken({ admin: true });
 th3.setCustomHex('#22c55e');
-eq(store3.getItem('bf-cp-custom'), '#22c55e', 'eigene Farbe unter App-eigenem Schluessel');
-eq(store3.getItem('bf-theme'), null, 'Overlay-Schluessel bleibt unberuehrt');
+eq(store3.getItem('frr-cp-custom'), '#22c55e', 'eigene Farbe unter App-eigenem Schluessel');
+eq(store3.getItem('frr-theme'), null, 'Overlay-Schluessel bleibt unberuehrt');
 eq(th3.theme().accent, '#22c55e', 'aktives Theme nutzt die eigene Farbe');
 
 // Flaechen: Violett muss exakt so aussehen wie vor der Umstellung, sonst
@@ -250,7 +250,7 @@ eq(canon(clean({ Rex: -1 })), '', 'negative Werte fallen raus');
 // nicht) — der stuendliche Timer meldete sich also ins Leere, und die
 // Zuhoerer stapelten sich.
 const gefeuert = {};
-const bfStub = {
+const frrStub = {
   onUpdateAvailable: (f) => { gefeuert.avail = f; zaehl('avail'); },
   onUpdateNone: (f) => { gefeuert.none = f; zaehl('none'); },
   onUpdateProgress: (f) => { gefeuert.prog = f; zaehl('prog'); },
@@ -260,9 +260,9 @@ const bfStub = {
 const zaehler = {};
 function zaehl(k) { zaehler[k] = (zaehler[k] || 0) + 1; }
 
-initUpdates(bfStub);
-initUpdates(bfStub);   // zweiter Aufruf darf NICHTS zusaetzlich registrieren
-initUpdates(bfStub);
+initUpdates(frrStub);
+initUpdates(frrStub);   // zweiter Aufruf darf NICHTS zusaetzlich registrieren
+initUpdates(frrStub);
 eq(zaehler.avail, 1, 'IPC-Zuhoerer nur einmal registriert, auch bei Mehrfach-Init');
 
 eq(getUpdate().state, 'idle', 'Startzustand ist idle');

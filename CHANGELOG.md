@@ -7,6 +7,18 @@
 
 ## [Unreleased]
 
+## v1.11.21 — Interne Umbenennung (kein BlackFossil-Code mehr)
+
+### 🔧 Sonstiges
+
+- Alle internen Bezeichner, die noch aus der BlackFossil-Vorlage
+  stammten (CSS-Klassen, Funktionsnamen, gespeicherte Einstellungen),
+  sind jetzt auf Ferrosaur umbenannt. Rein technisch — keine
+  Funktionsänderung. Einmaliger Nebeneffekt: eigene HUD-Anordnung,
+  Kartenkalibrierung, ausgeblendete Elemente und Lautstärke-Einstellungen
+  werden nach diesem Update einmalig auf Standard zurückgesetzt, weil
+  die Speicher-Schlüssel sich geändert haben.
+
 ## v1.11.20 — Rate-Wabe entfernt, HP auf Grow-Ebene
 
 ### 🔧 Sonstiges
