@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.18 — Vitals-Waben als Dreieck (wie Referenzbild)
+
+### 🔧 Sonstiges
+
+- Essen/Ausdauer/Durst bilden jetzt ein echtes, durchgehend verzahntes
+  Dreieck (Essen oben, Ausdauer/Durst darunter links/rechts), passend
+  zum sauberen Referenzbild des nativen Vitals-HUDs.
+
 ## v1.11.17 — Ausdauer-Icon korrigiert
 
 ### 🔧 Sonstiges
