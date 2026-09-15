@@ -1093,6 +1093,19 @@ function updateVoiceWarn() {
   if (w) w.style.display = (!!me && !voiceConnected) ? 'block' : 'none';
 }
 
+// ── "Aktive Dinos"-Box: wer ist gerade mit welcher Spezies auf dem Server ────
+function renderServerDinos() {
+  const box = el('serverDinos'), list = el('serverDinosList');
+  if (!box || !list) return;
+  if (!me || !players.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  list.innerHTML = players
+    .slice()
+    .sort((a, b) => (a.isYou ? -1 : b.isYou ? 1 : 0) || (a.name || '').localeCompare(b.name || ''))
+    .map((p) => `<div>${p.isYou ? '⭐' : '🦖'} ${escapeHtml(p.name || '?')} — ${escapeHtml(p.className || '?')}</div>`)
+    .join('');
+}
+
 // ── Positionen pollen ───────────────────────────────────────────────────────
 function startPositionPolling() {
   const poll = async () => {
@@ -1123,6 +1136,7 @@ function startPositionPolling() {
         // Health läuft separat über pollVitals() (1s, Slow-Cache; Combat-Stat nicht im Fast-Pull) — nicht über Positionen
         computeMoveAngles();   // Pfeil-Richtung aus tatsächlicher Karten-Bewegung
         minimapDirty = true;   // neue Positionen → Minimap neu zeichnen
+        renderServerDinos();   // "Aktive Dinos"-Box neben der Minimap
         if (Array.isArray(data.toasts) && data.toasts.length) enqueueServerToasts(data.toasts);
         parkAt = Number(data.parkAt) || 0; updateParkWarn();
         golden = mergeGolden(golden, data.golden);
@@ -6293,6 +6307,7 @@ async function renderSkinEditor() {
     ? '🟢 Live-Vorschau — mit „Bestätigen" wird der Skin übernommen (50 Pkt/Farbe). Schließen ohne Bestätigen setzt zurück.'
     : '🟢 Änderungen werden live im Spiel übernommen';
   panel.innerHTML = `<h2>🎨 Skin Editor — ${me.dino}</h2>
+    <div style="font-size:12px;color:#f59e0b;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:8px;padding:8px 10px;margin:2px 0 12px">⚠️ Deine Auswahl wird gespeichert, aber <b>noch nicht live auf deinen Dino im Spiel übertragen</b> — das kommt in einem späteren Update.</div>
     <div id="skLive" style="font-size:12px;color:${skinPays ? '#f59e0b' : '#22c55e'};margin:2px 0 14px">${liveMsg}</div>
     <div class="sec-title">🎭 Rollplay-Name</div>
     <div style="font-size:11px;color:var(--muted);margin:2px 0 8px">Andere Spieler sehen diesen Namen statt deines Steam-Namens. Leer speichern = zurücksetzen.</div>

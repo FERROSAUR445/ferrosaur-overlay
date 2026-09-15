@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.6 — Skin-Menü speichert (noch ohne Live-Anwendung)
+
+### ✨ Neu
+
+- Skin-Editor speichert deine Auswahl inkl. Vorlagen. Live-Übertragung auf den
+  Dino im Spiel folgt in einem späteren Update (braucht Server-Mod).
+
 ## v1.11.5 — Overlay erscheint jetzt wirklich
 
 ### 🐛 Fehlerbehoben
