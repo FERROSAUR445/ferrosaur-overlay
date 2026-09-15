@@ -149,7 +149,7 @@ let fgUpdatedAt = 0;
 let fgEverSawGame = false;
 function ensureFgProbe() {
   if (process.platform !== 'win32' || FG_PS1) return;
-  FG_PS1 = path.join(app.getPath('temp'), 'frr-foreground.ps1');
+  FG_PS1 = path.join(app.getPath('temp'), 'bf-foreground.ps1');
   const script =
     'Add-Type @"\n' +
     'using System;using System.Runtime.InteropServices;using System.Diagnostics;\n' +
@@ -200,7 +200,7 @@ let gameRect = null;      // { x, y, width, height } in PHYSISCHEN Pixeln, oder 
 let gameRectAt = 0;
 function ensureGeoProbe() {
   if (process.platform !== 'win32' || GEO_PS1) return;
-  GEO_PS1 = path.join(app.getPath('temp'), 'frr-gamegeo.ps1');
+  GEO_PS1 = path.join(app.getPath('temp'), 'bf-gamegeo.ps1');
   const script =
     'Add-Type @"\n' +
     'using System;using System.Runtime.InteropServices;using System.Diagnostics;\n' +
@@ -272,7 +272,7 @@ function bringOverlayToFront() {
   catch { try { hwnd = String(overlayWindow.getNativeWindowHandle().readUInt32LE(0)); } catch { return; } }
   try {
     if (!FRONT_PS1) {
-      FRONT_PS1 = path.join(app.getPath('temp'), 'frr-front.ps1');
+      FRONT_PS1 = path.join(app.getPath('temp'), 'bf-front.ps1');
       const script =
         'param([string]$h)\n' +
         'Add-Type @"\n' +

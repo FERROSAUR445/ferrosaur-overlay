@@ -120,8 +120,8 @@ function memStorage() {
 // getrennte userData-Verzeichnisse und damit ohnehin getrennten localStorage —
 // eigene Namen machen sichtbar, dass sich hier nichts abgleicht.
 export function makeTheme(opts = {}) {
-  const storageKey = opts.storageKey || 'frr-theme';
-  const customKey = opts.customKey || 'frr-custom';
+  const storageKey = opts.storageKey || 'bf-theme';
+  const customKey = opts.customKey || 'bf-custom';
   const store = opts.storage || (typeof localStorage !== 'undefined' ? localStorage : memStorage());
   const setVars = opts.setVars || domSetVars;
   const onApply = opts.onApply || (() => {});

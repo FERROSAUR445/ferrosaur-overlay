@@ -35,7 +35,7 @@ export const ZONES = [];
 // Affin löst Achsentausch, Spiegelung, Drehung und Skalierung auf einmal.
 // Nur die Y-Achse spiegeln: nx unverändert (a positiv), ny → 1 − ny (d positiv).
 const DEFAULTS = { a: 8.3e-7, b: 0, e: 0.5, c: 0, d: 8.3e-7, f: 0.5 };
-const CAL_KEY = 'frr-cal-affine-v2'; // Schlüssel angehoben → alte gespeicherte Kalibrierungen werden ignoriert
+const CAL_KEY = 'bf-cal-affine-v2'; // Schlüssel angehoben → alte gespeicherte Kalibrierungen werden ignoriert
 let cal = loadCal();
 
 function loadCal() {

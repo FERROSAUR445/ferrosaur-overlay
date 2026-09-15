@@ -13,12 +13,12 @@
   <!-- Globaler Blitz-Filter: verzerrt Rahmen-Linien zu gezackten, flackernden Blitzen (wie im Logo) -->
   <svg width="0" height="0" aria-hidden="true" style="position:absolute;pointer-events:none">
     <defs>
-      <filter id="frr-lightning" x="-35%" y="-35%" width="170%" height="170%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="2" result="frrNoise">
+      <filter id="bf-lightning" x="-35%" y="-35%" width="170%" height="170%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="2" result="bfNoise">
           <animate attributeName="seed" values="1;9;3;12;1" dur="2.6s" repeatCount="indefinite"/>
           <animate attributeName="baseFrequency" values="0.018;0.032;0.018" dur="5s" repeatCount="indefinite"/>
         </feTurbulence>
-        <feDisplacementMap in="SourceGraphic" in2="frrNoise" scale="11" xChannelSelector="R" yChannelSelector="G"/>
+        <feDisplacementMap in="SourceGraphic" in2="bfNoise" scale="11" xChannelSelector="R" yChannelSelector="G"/>
       </filter>
     </defs>
   </svg>
@@ -305,16 +305,16 @@
           <input id="micGain" type="range" min="0" max="200" step="5" value="100" style="width:100%;accent-color:var(--accent)">
           <div style="font-size:11px;color:var(--muted)">Macht dein eigenes Mikro für alle anderen lauter oder leiser (100&nbsp;%&nbsp;=&nbsp;normal).</div>
         </div>
-        <details class="set-block frr-audio-adv">
+        <details class="set-block bf-audio-adv">
           <summary class="set-label" style="cursor:pointer;list-style:none">🎚️ Erweiterte Audio-Einstellungen</summary>
           <div style="font-size:11px;color:var(--muted);margin:2px 0 12px">Bearbeitet dein gesendetes Mikro (Reihenfolge: Rauschunterdrückung → Low-Cut → Gate → Kompressor → Limiter). Wirkt für alle anderen.</div>
 
           <!-- Rauschunterdrückung -->
-          <label class="frr-comp-toggle"><input id="micNsOn" type="checkbox"> 🔇 Rauschunterdrückung</label>
+          <label class="bf-comp-toggle"><input id="micNsOn" type="checkbox"> 🔇 Rauschunterdrückung</label>
           <div class="comp-desc" style="margin:-2px 0 12px">Browser-Rauschminderung (Lüfter, Tastatur, Grundrauschen) direkt am Mikro.</div>
 
           <!-- Low-Cut / High-Pass -->
-          <label class="frr-comp-toggle"><input id="micHpOn" type="checkbox"> 🩹 Low-Cut (High-Pass)</label>
+          <label class="bf-comp-toggle"><input id="micHpOn" type="checkbox"> 🩹 Low-Cut (High-Pass)</label>
           <div id="micHpCtrls" class="comp-sec">
             <div class="comp-row">
               <div class="comp-head"><span>Grenzfrequenz</span><span id="micHpFreqV" class="comp-val"></span></div>
@@ -324,7 +324,7 @@
           </div>
 
           <!-- Noise Gate -->
-          <label class="frr-comp-toggle"><input id="micGateOn" type="checkbox"> 🚪 Noise Gate</label>
+          <label class="bf-comp-toggle"><input id="micGateOn" type="checkbox"> 🚪 Noise Gate</label>
           <div id="micGateCtrls" class="comp-sec">
             <div class="comp-row">
               <div class="comp-head"><span>Schwelle (Threshold)</span><span id="micGateThresholdV" class="comp-val"></span></div>
@@ -349,7 +349,7 @@
           </div>
 
           <!-- Kompressor -->
-          <label class="frr-comp-toggle"><input id="micCompOn" type="checkbox"> 🎚️ Kompressor</label>
+          <label class="bf-comp-toggle"><input id="micCompOn" type="checkbox"> 🎚️ Kompressor</label>
           <div id="micCompCtrls" class="comp-sec">
             <div class="comp-row">
               <div class="comp-head"><span>Vorverstärkung</span><span id="micPreGainV" class="comp-val"></span></div>
@@ -384,7 +384,7 @@
           </div>
 
           <!-- Limiter -->
-          <label class="frr-comp-toggle"><input id="micLimitOn" type="checkbox"> 🧱 Limiter</label>
+          <label class="bf-comp-toggle"><input id="micLimitOn" type="checkbox"> 🧱 Limiter</label>
           <div id="micLimitCtrls" class="comp-sec">
             <div class="comp-row">
               <div class="comp-head"><span>Obergrenze (Ceiling)</span><span id="micLimitCeilV" class="comp-val"></span></div>
@@ -402,11 +402,11 @@
         <div class="col-head">⚙️ Voicechat-Einstellungen</div>
         <div class="set-block">
           <div class="set-label">🎤 Mikrofon (Eingabe)</div>
-          <select id="micDevSel" class="frr-select"><option>Standard</option></select>
+          <select id="micDevSel" class="bf-select"><option>Standard</option></select>
         </div>
         <div class="set-block">
           <div class="set-label">🔈 Ausgabegerät</div>
-          <select id="spkDevSel" class="frr-select"><option>Standard</option></select>
+          <select id="spkDevSel" class="bf-select"><option>Standard</option></select>
         </div>
         <div class="set-block">
           <div class="set-label">🔊 Deine Sprechreichweite <span style="color:var(--muted)">(andere hören dich so weit)</span></div>
@@ -424,8 +424,8 @@
             <input id="spatial3d" type="range" min="0" max="150" step="5" value="100" style="flex:1;accent-color:var(--accent)">
             <span id="spatial3dVal" style="width:42px;text-align:right;font-size:12px;color:var(--muted)">100%</span>
           </div>
-          <label class="frr-toggle-row" style="margin:2px 0 8px" title="Bei Knistern/Audio-Problemen ausschalten — Voice läuft dann ohne 3D/Unterwasser-Effekte weiter">
-            <div class="frr-tg-txt"><span class="frr-tg-lbl">🎛️ 3D &amp; Effekte</span><span class="frr-tg-desc">Bei Audio-Problemen (Knistern) ausschalten — Voice läuft dann ohne 3D/Unterwasser.</span></div>
+          <label class="bf-toggle-row" style="margin:2px 0 8px" title="Bei Knistern/Audio-Problemen ausschalten — Voice läuft dann ohne 3D/Unterwasser-Effekte weiter">
+            <div class="bf-tg-txt"><span class="bf-tg-lbl">🎛️ 3D &amp; Effekte</span><span class="bf-tg-desc">Bei Audio-Problemen (Knistern) ausschalten — Voice läuft dann ohne 3D/Unterwasser.</span></div>
             <input id="voiceFxChk" type="checkbox" checked>
           </label>
           <input id="voiceSearch" placeholder="🔍 Spieler suchen…" style="width:100%;margin-bottom:6px;padding:7px;border-radius:6px;border:1px solid var(--border);background:rgba(0,0,0,0.25);color:#eee;box-sizing:border-box">
@@ -453,13 +453,13 @@
         </div>
         <div class="set-block">
           <div class="set-label">⚡ Low-Spec / Performance</div>
-          <div class="frr-toggle-row"><div class="frr-tg-txt"><span class="frr-tg-lbl">⚡ Low-Spec-Modus</span><span class="frr-tg-desc">Weichzeichner + alle Effekte auf einmal aus — für schwächere PCs / mehr FPS.</span></div><button id="lowSpecBtn" class="frr-switch secondary" role="switch" aria-label="Low-Spec-Modus"></button></div>
+          <div class="bf-toggle-row"><div class="bf-tg-txt"><span class="bf-tg-lbl">⚡ Low-Spec-Modus</span><span class="bf-tg-desc">Weichzeichner + alle Effekte auf einmal aus — für schwächere PCs / mehr FPS.</span></div><button id="lowSpecBtn" class="bf-switch secondary" role="switch" aria-label="Low-Spec-Modus"></button></div>
           <div class="set-label" style="margin-top:12px">Einzeln einstellen</div>
-          <div class="frr-toggle-row"><span class="frr-tg-lbl">🌫️ Weichzeichner</span><button id="blurToggleBtn" class="frr-switch" role="switch" aria-label="Weichzeichner"></button></div>
-          <div class="frr-toggle-row"><span class="frr-tg-lbl">⚡ Effekte</span><button id="fxToggleBtn" class="frr-switch" role="switch" aria-label="Effekte"></button></div>
+          <div class="bf-toggle-row"><span class="bf-tg-lbl">🌫️ Weichzeichner</span><button id="blurToggleBtn" class="bf-switch" role="switch" aria-label="Weichzeichner"></button></div>
+          <div class="bf-toggle-row"><span class="bf-tg-lbl">⚡ Effekte</span><button id="fxToggleBtn" class="bf-switch" role="switch" aria-label="Effekte"></button></div>
           <div style="font-size:11px;color:var(--muted);margin-top:8px">🌫️ Weichzeichner (Blur) = größter FPS-Kostenpunkt. ⚡ Effekte = Animationen/Leuchten. Beim <em>Spielen</em> (Overlay-Dock zu) sind viele Effekte ohnehin automatisch aus.</div>
           <div class="set-label" style="margin-top:14px">Experimentell</div>
-          <div class="frr-toggle-row"><span class="frr-tg-lbl">🪟 Fenster-Shrink</span><button id="shrinkToggleBtn" class="frr-switch secondary" role="switch" aria-label="Fenster-Shrink"></button></div>
+          <div class="bf-toggle-row"><span class="bf-tg-lbl">🪟 Fenster-Shrink</span><button id="shrinkToggleBtn" class="bf-switch secondary" role="switch" aria-label="Fenster-Shrink"></button></div>
           <div style="font-size:11px;color:var(--muted);margin-top:8px">🪟 Verkleinert das Overlay-Fenster beim Spielen (Dock zu) auf die HUD-Bereiche, statt den ganzen Bildschirm zu bedecken — gibt dem Spiel oft den schnellen Vollbild-Pfad zurück (mehr FPS). Wirkung ist GPU-/treiberabhängig: <em>ausprobieren</em>. Weniger sichtbares HUD (im Edit-Mode ausblenden) = stärkerer Effekt.</div>
         </div>
       </div>
@@ -546,10 +546,10 @@
         <div class="sec-title">📍 Teleport-Punkte</div>
         <div class="set-block" style="margin-top:8px">
           <div class="set-label">TP-Punkt an aktueller Position</div>
-          <input id="tpName" placeholder="Name" maxlength="40" class="frr-select" style="cursor:text;margin-bottom:6px">
+          <input id="tpName" placeholder="Name" maxlength="40" class="bf-select" style="cursor:text;margin-bottom:6px">
           <div style="display:flex;gap:6px;margin-bottom:8px">
-            <input id="tpPrice" type="number" min="0" placeholder="Preis" class="frr-select" style="flex:1">
-            <input id="tpCooldown" type="number" min="0" placeholder="Cooldown (Min)" class="frr-select" style="flex:1">
+            <input id="tpPrice" type="number" min="0" placeholder="Preis" class="bf-select" style="flex:1">
+            <input id="tpCooldown" type="number" min="0" placeholder="Cooldown (Min)" class="bf-select" style="flex:1">
           </div>
           <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;user-select:none">
             <input id="tpWater" type="checkbox" style="width:auto;cursor:pointer"> 💧 Wasser-Teleport (im Overlay hervorgehoben)
@@ -618,8 +618,8 @@
         <div id="opsVersions" class="dt-muted" style="margin:8px 0 14px">Lade…</div>
         <div class="sec-title">📜 Logs</div>
         <div style="display:flex;gap:6px;align-items:center;margin:8px 0 6px;flex-wrap:wrap">
-          <select id="opsLogSel" class="frr-select" style="flex:0 0 190px"></select>
-          <input id="opsLogFilter" placeholder="🔍 Filter…" class="frr-select" style="cursor:text;flex:1;min-width:120px">
+          <select id="opsLogSel" class="bf-select" style="flex:0 0 190px"></select>
+          <input id="opsLogFilter" placeholder="🔍 Filter…" class="bf-select" style="cursor:text;flex:1;min-width:120px">
           <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;user-select:none">
             <input id="opsLogFollow" type="checkbox" style="width:auto;cursor:pointer"> Folgen
           </label>
@@ -681,7 +681,7 @@
         <div class="col-head">👤 Spieler-Verwaltung</div>
         <div class="set-block">
           <div class="set-label">Discord-User suchen</div>
-          <input id="admUserSearch" list="admUserList" placeholder="Name tippen…" class="frr-select" style="cursor:text" autocomplete="off">
+          <input id="admUserSearch" list="admUserList" placeholder="Name tippen…" class="bf-select" style="cursor:text" autocomplete="off">
           <datalist id="admUserList"></datalist>
           <button id="admUserLoad" style="width:100%;margin-top:8px">🔍 Info laden</button>
         </div>
@@ -692,13 +692,13 @@
         <div class="set-block">
           <div class="set-label">💬 Nachricht an Spieler (Toast)</div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Wird dem Spieler im Overlay als Toast angezeigt (beim nächsten Update, wenn er online ist).</div>
-          <input id="msgUserSearch" list="admUserList" placeholder="Name tippen…" class="frr-select" style="cursor:text" autocomplete="off">
-          <textarea id="msgText" placeholder="Nachricht…" maxlength="300" rows="3" class="frr-select" style="cursor:text;margin-top:6px;resize:vertical;box-sizing:border-box"></textarea>
+          <input id="msgUserSearch" list="admUserList" placeholder="Name tippen…" class="bf-select" style="cursor:text" autocomplete="off">
+          <textarea id="msgText" placeholder="Nachricht…" maxlength="300" rows="3" class="bf-select" style="cursor:text;margin-top:6px;resize:vertical;box-sizing:border-box"></textarea>
           <button id="msgSendBtn" style="width:100%;margin-top:8px">💬 Als Toast senden</button>
           <hr style="border:0;border-top:1px solid var(--border);margin:14px 0">
           <div class="set-label">🎯 Spieler verfolgen (Follow)</div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Dein Admin-Pawn (Fly-Mode) folgt dem Spieler ~50 m von oben. Im Fly-Mode sein, dann starten.</div>
-          <input id="followUserSearch" list="admUserList" placeholder="Name tippen…" class="frr-select" style="cursor:text" autocomplete="off">
+          <input id="followUserSearch" list="admUserList" placeholder="Name tippen…" class="bf-select" style="cursor:text" autocomplete="off">
           <button id="followToggleBtn" style="width:100%;margin-top:8px">🎯 Follow starten</button>
         </div>
       </div>
@@ -708,7 +708,7 @@
         <div class="col-head">🎁 Beschenken</div>
         <div class="set-block">
           <div class="set-label">Ziel</div>
-          <select id="giftTargetKind" class="frr-select">
+          <select id="giftTargetKind" class="bf-select">
             <option value="user">👤 Einzelner User</option>
             <option value="role">👥 Rolle (alle Mitglieder)</option>
             <option value="online">🌐 Alle Online</option>
@@ -716,19 +716,19 @@
         </div>
         <div id="giftUserBox" class="set-block">
           <div class="set-label">User</div>
-          <input id="giftUserSearch" list="admUserList" placeholder="Name tippen…" class="frr-select" style="cursor:text" autocomplete="off">
+          <input id="giftUserSearch" list="admUserList" placeholder="Name tippen…" class="bf-select" style="cursor:text" autocomplete="off">
         </div>
         <div id="giftRoleBox" class="set-block" style="display:none">
           <div class="set-label">Rolle</div>
-          <select id="giftRoleSel" class="frr-select"></select>
+          <select id="giftRoleSel" class="bf-select"></select>
         </div>
         <div class="set-block">
           <div class="set-label">Was</div>
-          <select id="giftType" class="frr-select"></select>
+          <select id="giftType" class="bf-select"></select>
         </div>
         <div class="set-block">
           <div class="set-label">Menge</div>
-          <input id="giftAmount" type="number" min="1" value="1" class="frr-select" style="cursor:text">
+          <input id="giftAmount" type="number" min="1" value="1" class="bf-select" style="cursor:text">
         </div>
         <button id="giftSubmit" style="width:100%;margin-top:14px;background:#16a34a">🎁 Vergeben</button>
         <div id="giftResult" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
@@ -801,8 +801,8 @@
   <div id="updateHint" style="display:none;position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9999;background:rgba(var(--accent-rgb),0.92);color:#fff;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--glow);cursor:pointer">⬆️ Update verfügbar</div>
 
   <!-- Penetrante Warnung: auf dem Server, aber NICHT im Voice -->
-  <style>@keyframes frrPulse{0%,100%{opacity:1;transform:translateX(-50%) scale(1)}50%{opacity:.6;transform:translateX(-50%) scale(1.04)}}</style>
-  <div id="voiceWarn" style="display:none;position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:10000;background:#dc2626;color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;font-weight:800;box-shadow:0 0 18px rgba(220,38,38,.85);cursor:pointer;animation:frrPulse 1.1s ease-in-out infinite">🔴 Du bist NICHT im Voice-Chat — klicken zum Verbinden</div>
+  <style>@keyframes bfPulse{0%,100%{opacity:1;transform:translateX(-50%) scale(1)}50%{opacity:.6;transform:translateX(-50%) scale(1.04)}}</style>
+  <div id="voiceWarn" style="display:none;position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:10000;background:#dc2626;color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;font-weight:800;box-shadow:0 0 18px rgba(220,38,38,.85);cursor:pointer;animation:bfPulse 1.1s ease-in-out infinite">🔴 Du bist NICHT im Voice-Chat — klicken zum Verbinden</div>
 
   <!-- Auto-Kalibrierung: Anweisung über der Karte -->
   <div id="calibPrompt" style="display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:10001;background:rgba(15,10,30,.96);border:1px solid var(--accent);color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:var(--glow);text-align:center;max-width:480px">

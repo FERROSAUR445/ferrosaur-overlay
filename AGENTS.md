@@ -47,10 +47,10 @@ Eigenes Datenverzeichnis, damit sich beide Instanzen nicht in die Quere kommen.
 Die Sitzung wird hineinkopiert, dann ist man sofort angemeldet:
 
 ```bash
-mkdir -p /tmp/frr-review
-cp "$HOME/.config/Ferrosaur Companion Test/session.json" /tmp/frr-review/
+mkdir -p /tmp/bf-review
+cp "$HOME/.config/Ferrosaur Companion Test/session.json" /tmp/bf-review/
 cd app && npm run build:renderer
-DISPLAY=:1 npx electron src/companion-main.js --user-data-dir=/tmp/frr-review
+DISPLAY=:1 npx electron src/companion-main.js --user-data-dir=/tmp/bf-review
 ```
 
 ## Schreibzugriffe im Testlauf blockieren

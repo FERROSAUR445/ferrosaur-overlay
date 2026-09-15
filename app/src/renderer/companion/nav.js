@@ -99,7 +99,7 @@ export function itemFor(view) {
 // Gruppen sind aufgeklappt, solange nichts anderes gespeichert ist. Eine
 // zugeklappte Gruppe versteckt Punkte — das darf nie der Startzustand sein,
 // den man nicht selbst gewaehlt hat.
-const KEY = 'frr-cp-nav-zu';
+const KEY = 'bf-cp-nav-zu';
 
 export function collapsedGroups(storage) {
   const s = storage || (typeof localStorage !== 'undefined' ? localStorage : null);

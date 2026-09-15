@@ -10,7 +10,7 @@ Sync „Spielerposition ↔ Kartenposition" genauer wird.
 - **Zonen-Layer** liegen deckungsgleich als PNG in derselben Auflösung
   (`zone-sanctuary.png`, `zone-patrol.png`, `zone-migration.png`).
 - **Kalibrierung:** Affin-Transformation (2×2-Matrix + Verschiebung) in `map.js`
-  (`worldToNorm`/`normToWorld`/`solveAffine`), gespeichert in `localStorage['frr-cal-affine-v2']`
+  (`worldToNorm`/`normToWorld`/`solveAffine`), gespeichert in `localStorage['bf-cal-affine-v2']`
   und serverseitig geteilt über den `/calibration`-Endpunkt. Aktuell **von Hand kalibriert**
   (Genauigkeit grob ~10–50 px, je nach gesetzten Punkten).
 
