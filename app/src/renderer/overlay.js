@@ -1153,11 +1153,11 @@ function startPositionPolling() {
         checkZoneChange();
         updateProximityVolumes();
         // Kompass rendert sich selbst per 60fps-rAF-Loop (compassLoop) mit weicher Heading-Interpolation.
+        updateSpeakingBox();   // Sprecher-Namen aktualisieren/ausblenden (VOR renderVoiceUsers, damit _speakSeen frisch ist)
         if (settingsOpen) renderVoiceUsers();
         if (mapOpen) renderBigMap();
         if (featureOpen === 'group') updateGroupLive();   // nur Mitglieder/Chat updaten, NICHT das Eingabefeld neu bauen
         if (featureOpen === 'profile') updateProfileServerDinos();   // Server-Dino-Zahlen live
-        updateSpeakingBox();   // Sprecher-Namen aktualisieren/ausblenden
       }
     } catch {}
   };
@@ -1658,10 +1658,16 @@ function renderVoiceUsers() {
   box.innerHTML = '';
   for (const { p, name } of list) {
     const g = userGain[p.identity] ?? 1;
+    // Spricht gerade? Gleicher Zustand wie die 🔊-Box oben (ActiveSpeakersChanged + 1,5s
+    // Nachlauf gegen Flackern) - hier zusaetzlich pro Zeile in der Teilnehmerliste sichtbar.
+    const speaking = _speakSeen.has(p.identity) && (Date.now() - _speakSeen.get(p.identity) <= 1500);
     const row = document.createElement('div');
     row.style.cssText = 'margin-bottom:8px';
     row.innerHTML =
-      `<div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">👤 ${name}</div>` +
+      `<div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px;display:flex;align-items:center;gap:5px">` +
+        `<span style="width:8px;height:8px;border-radius:50%;flex:none;background:${speaking ? '#22c55e' : 'transparent'};box-shadow:${speaking ? '0 0 6px #22c55e' : 'none'};transition:background .15s"></span>` +
+        `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👤 ${name}</span>` +
+      `</div>` +
       `<div style="display:flex;align-items:center;gap:6px">` +
         `<span title="Lautstärke" style="width:16px">🔊</span>` +
         `<input class="u-vol" type="range" min="0" max="200" step="5" value="${Math.round(g * 100)}" style="flex:1;accent-color:var(--accent)">` +
@@ -7924,7 +7930,7 @@ async function connect({ token, url }) {
     .on(RoomEvent.ConnectionQualityChanged, (q, p) => { if (room && p === room.localParticipant) setConnQuality(q); })
     .on(RoomEvent.ParticipantConnected, () => { broadcastRange(); if (settingsOpen) renderVoiceUsers(); })  // Neuer Teilnehmer lernt meine Reichweite
     .on(RoomEvent.ParticipantDisconnected, () => { if (settingsOpen) renderVoiceUsers(); })
-    .on(RoomEvent.ActiveSpeakersChanged, (speakers) => updateSpeakingBox(speakers))   // wen man gerade hört
+    .on(RoomEvent.ActiveSpeakersChanged, (speakers) => { updateSpeakingBox(speakers); if (settingsOpen) renderVoiceUsers(); })   // wen man gerade hört + Sprech-Punkt in der Teilnehmerliste
     .on(RoomEvent.DataReceived, (payload, participant) => {
       try {
         const msg = JSON.parse(new TextDecoder().decode(payload));

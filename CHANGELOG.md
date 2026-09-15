@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.14 — Sprech-Anzeige in der Teilnehmerliste
+
+### ✨ Neu
+
+- In den Einstellungen bei den Voice-Teilnehmern leuchtet jetzt ein
+  grüner Punkt neben dem Namen, solange die Person gerade spricht.
+
 ## v1.11.13 — Vitals-Waben mit Icons statt Text
 
 ### 🔧 Sonstiges
