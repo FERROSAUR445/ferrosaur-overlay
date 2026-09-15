@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.12 — Waben wieder durchgehend verzahnt
+
+### 🔧 Sonstiges
+
+- Ausdauer/Essen/Durst wieder direkt an Rate/Grow anschließend (keine
+  Lücke), wie im nativen Spiel-HUD.
+
 ## v1.11.11 — Waben-Anordnung korrigiert
 
 ### 🔧 Sonstiges
