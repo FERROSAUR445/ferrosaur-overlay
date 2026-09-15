@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.8 — Aufräumen
+
+### 🔧 Sonstiges
+
+- "Aktive Dinos"-Box neben der Minimap wieder entfernt.
+- Admins sehen jetzt den Kalibrierungs-Button auf der Karte (bisher immer
+  versteckt) — Kartenmarker brauchen eine einmalige Kalibrierung.
+
 ## v1.11.7 — Kompass zeigt "auf dem Server" korrekt an
 
 ### 🐛 Fehlerbehoben

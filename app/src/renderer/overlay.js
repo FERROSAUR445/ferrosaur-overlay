@@ -1100,19 +1100,6 @@ function updateVoiceWarn() {
   if (w) w.style.display = (!!me && !voiceConnected) ? 'block' : 'none';
 }
 
-// ── "Aktive Dinos"-Box: wer ist gerade mit welcher Spezies auf dem Server ────
-function renderServerDinos() {
-  const box = el('serverDinos'), list = el('serverDinosList');
-  if (!box || !list) return;
-  if (!me || !players.length) { box.style.display = 'none'; return; }
-  box.style.display = 'block';
-  list.innerHTML = players
-    .slice()
-    .sort((a, b) => (a.isYou ? -1 : b.isYou ? 1 : 0) || (a.name || '').localeCompare(b.name || ''))
-    .map((p) => `<div>${p.isYou ? '⭐' : '🦖'} ${escapeHtml(p.name || '?')} — ${escapeHtml(p.className || '?')}</div>`)
-    .join('');
-}
-
 // ── Positionen pollen ───────────────────────────────────────────────────────
 function startPositionPolling() {
   const poll = async () => {
@@ -1143,7 +1130,6 @@ function startPositionPolling() {
         // Health läuft separat über pollVitals() (1s, Slow-Cache; Combat-Stat nicht im Fast-Pull) — nicht über Positionen
         computeMoveAngles();   // Pfeil-Richtung aus tatsächlicher Karten-Bewegung
         minimapDirty = true;   // neue Positionen → Minimap neu zeichnen
-        renderServerDinos();   // "Aktive Dinos"-Box neben der Minimap
         if (Array.isArray(data.toasts) && data.toasts.length) enqueueServerToasts(data.toasts);
         parkAt = Number(data.parkAt) || 0; updateParkWarn();
         golden = mergeGolden(golden, data.golden);
@@ -7854,9 +7840,9 @@ async function connectWithSession(session) {
     if (!loadMyTickets._t) loadMyTickets._t = setInterval(loadMyTickets, 20000);
     if (!loadMyEvents._t) loadMyEvents._t = setInterval(loadMyEvents, 60000);
     if (!loadOvGroup._t) loadOvGroup._t = setInterval(loadOvGroup, 15000);
-    // Kalibrierung & Zonen sind fertig (server-gespeichert) — Tools ausgeblendet,
-    // damit niemand versehentlich etwas überschreibt. Bei Bedarf wieder einblendbar.
-    el('calibBtn').style.display = 'none';
+    // Kalibrierung noch NICHT gemacht (neue Karte, frisches Projekt) - fuer Admins
+    // sichtbar lassen, bis einmal sauber kalibriert wurde. Zonen wie gehabt fuer Staff.
+    el('calibBtn').style.display = isAdmin ? 'block' : 'none';
     el('zoneBtn').style.display = isStaff ? 'block' : 'none';
     renderHotkeys();
     if (data.name) el('hudName').textContent = data.name;
