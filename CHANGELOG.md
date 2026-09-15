@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.26 — Team-Rollen: Admin/Moderator/Supporter vergeben
+
+### 🔧 Sonstiges
+
+- Im Team-Panel unter Accounts kannst du jetzt Spielern per Discord-ID
+  die Rolle Admin, Moderator oder Supporter geben (oder entziehen).
+  Jede Rolle hat automatisch die passenden Rechte im Overlay.
+
 ## v1.11.25 — Standard-Rang heißt jetzt FERROSAUR
 
 ### 🔧 Sonstiges

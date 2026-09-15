@@ -6925,10 +6925,24 @@ function renderAccount() {
     <div class="dt-form">
       <button id="acDupBtn" style="width:100%">🔁 Duplikate suchen</button>
       <div id="acDupList" style="margin-top:8px"></div>
+    </div>
+    <div class="dt-sec" style="margin-top:18px">🎖️ Team-Rolle vergeben</div>
+    <div class="dt-form">
+      <div class="dt-row"><div style="flex:1"><label>Discord-ID</label><input id="acRoleD" class="tm-input" placeholder="Discord-ID"></div>
+        <div style="flex:1"><label>Rolle</label><select id="acRoleSel" class="tm-input">
+          <option value="Supporter">Supporter</option>
+          <option value="Moderator">Moderator</option>
+          <option value="Admin">Admin</option>
+        </select></div></div>
+      <button id="acRoleSetBtn" style="width:100%;margin-top:8px;background:#16a34a">🎖️ Rolle setzen</button>
+      <div id="acRoleResult" class="dt-muted" style="margin-top:6px"></div>
+      <div id="acRoleList" style="margin-top:12px"></div>
     </div>`;
   el('acFindBtn').onclick = acFind;
   el('acLinkBtn').onclick = acLink;
   el('acDupBtn').onclick = acDups;
+  el('acRoleSetBtn').onclick = acRoleSet;
+  acRoleList();
 }
 const acHdr = () => ({ Authorization: `Bearer ${sessionToken}` });
 function acLinkRow(r) {
@@ -6966,6 +6980,32 @@ async function acDups() {
     box.innerHTML = d.dups.map((g) => `<div style="margin-bottom:10px"><div class="dt-muted">🎮 ${escapeHtml(g.steamId)} — ${g.accounts.length}× verknüpft</div>${g.accounts.map(acLinkRow).join('')}</div>`).join('');
     box.querySelectorAll('[data-unlink]').forEach((b) => { b.onclick = () => apiAction('/admin/accounts/unlink', { discordId: b.dataset.unlink }, '🔗 Verknüpfung gelöst', acDups); });
   } catch (e) { box.innerHTML = `<div style="color:#ef4444;font-size:13px">${escapeHtml(e.message || '')}</div>`; }
+}
+const RANK_EMOJI = { Admin: '🛡️', Moderator: '🔨', Supporter: '🎧' };
+function acRoleRow(r) {
+  return `<div class="dt-slot"><span>${RANK_EMOJI[r.rank] || '🎖️'} ${escapeHtml(r.name || r.discordId)} · <b>${escapeHtml(r.rank)}</b> · 🆔 ${escapeHtml(r.discordId)}</span><button class="secondary" data-rmrole="${escapeHtml(r.discordId)}" style="flex:none;width:auto;padding:5px 10px;color:#fca5a5">Entfernen</button></div>`;
+}
+async function acRoleList() {
+  const box = el('acRoleList'); if (!box) return;
+  box.innerHTML = '<div class="dt-muted">Lädt…</div>';
+  try {
+    const d = await fetch(`${config.tokenBase}/admin/staff-roles`, { headers: acHdr() }).then((r) => r.json());
+    if (d.error) throw new Error(d.error);
+    box.innerHTML = d.roles.length ? d.roles.map(acRoleRow).join('') : '<div class="dt-muted">Noch niemandem eine Rolle zugewiesen.</div>';
+    box.querySelectorAll('[data-rmrole]').forEach((b) => { b.onclick = () => apiAction('/admin/staff-roles/set', { discordId: b.dataset.rmrole, rank: null }, '🎖️ Rolle entfernt', acRoleList); });
+  } catch (e) { box.innerHTML = `<div style="color:#ef4444;font-size:13px">${escapeHtml(e.message || '')}</div>`; }
+}
+async function acRoleSet() {
+  const did = el('acRoleD').value.trim(), rank = el('acRoleSel').value;
+  if (!did) { showToast('Discord-ID eingeben', 'error'); return; }
+  const out = el('acRoleResult'); out.textContent = '…';
+  try {
+    const r = await fetch(`${config.tokenBase}/admin/staff-roles/set`, { method: 'POST', headers: { ...acHdr(), 'Content-Type': 'application/json' }, body: JSON.stringify({ discordId: did, rank }) });
+    const d = await r.json(); if (!r.ok) throw new Error(apiErr(d));
+    showToast(`🎖️ ${rank} vergeben`, 'success');
+    out.textContent = '✅ Gesetzt.'; el('acRoleD').value = '';
+    acRoleList();
+  } catch (e) { showToast(e.message, 'error'); out.textContent = '❌ ' + e.message; }
 }
 
 // ── Announce + Server-Steuerung (Staff: Announce/Status; Mod+: Wipe; Admin: Start/Stop/Restart) ──
