@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.24 — Lebensanzeige: jede Wabe einzeln anpassbar
+
+### 🔧 Sonstiges
+
+- HP, Grow, Essen, Ausdauer und Durst sind jetzt 5 eigenständige
+  Waben statt einem festen Block. Im Edit-Mode (Settings → UI)
+  kannst du jede einzeln verschieben, skalieren und ein-/ausblenden.
+  Standardmäßig sieht die Anordnung weiterhin aus wie bisher.
+
 ## v1.11.23 — Nährstoff-Deko-Waben entfernt
 
 ### 🔧 Sonstiges

@@ -44,13 +44,15 @@ body:not(.dock-on) .stat-fill::before,
 body:not(.dock-on) .stat-fill::after,
 body:not(.dock-on) .elder-glow,
 body:not(.dock-on) .sec-title,
-body:not(.dock-on) #hudHeart svg {   /* Live-HP-Herz: Herzschlag beim Spielen stoppen (dauernder Repaint) */
+body:not(.dock-on) #hudHP svg, body:not(.dock-on) #hudGrow svg, body:not(.dock-on) #hudHunger svg,
+body:not(.dock-on) #hudStamina svg, body:not(.dock-on) #hudThirst svg {   /* Live-HP-Herz: Herzschlag beim Spielen stoppen (dauernder Repaint) */
   animation: none !important;
 }
 body:not(.dock-on) .stat-fill { transition: none !important; }
 /* Drop-Shadow-Filter am Herz ist beim Spielen teuer (weicher Glow, neu berechnet bei jedem
    Repaint) — im Idle auf einen billigen statischen Schatten reduzieren. HP-Farbe/Füllung bleibt. */
-body:not(.dock-on) #hudHeart svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6)) !important; }
+body:not(.dock-on) #hudHP svg, body:not(.dock-on) #hudGrow svg, body:not(.dock-on) #hudHunger svg,
+body:not(.dock-on) #hudStamina svg, body:not(.dock-on) #hudThirst svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6)) !important; }
 /* Minimap: drehender Ring + Glow-Puls beim Spielen aus (Dauer-Repaint). Karte bleibt sichtbar. */
 body:not(.dock-on) #minimapRing { display: none !important; }
 body:not(.dock-on) #minimap { animation: none !important; }
@@ -670,7 +672,11 @@ body.bf-edit #editBanner { display: flex; gap: 10px; align-items: center; }
 /* ── Einzelne HUD-Elemente aus-/einblenden (Edit-Mode) ──────────────────── */
 /* Ausgeblendete Cluster: im Normalbetrieb komplett weg … */
 body.bf-hide-hud #hud,
-body.bf-hide-hudHeart #hudHeart,
+body.bf-hide-hudHP #hudHP,
+body.bf-hide-hudGrow #hudGrow,
+body.bf-hide-hudHunger #hudHunger,
+body.bf-hide-hudStamina #hudStamina,
+body.bf-hide-hudThirst #hudThirst,
 body.bf-hide-minimapWrap #minimapWrap,
 body.bf-hide-hudInfo #hudInfo,
 body.bf-hide-eventPanel #eventPanel,
@@ -678,7 +684,8 @@ body.bf-hide-distHud #distHud,
 body.bf-hide-growTimer #growTimer,
 body.bf-hide-goldenHud #goldenHud { display: none !important; }
 /* Dienst-/Admin-Modus: Lebensanzeige ausblenden */
-body.on-duty #hudHeart { display: none !important; }
+body.on-duty #hudHP, body.on-duty #hudGrow, body.on-duty #hudHunger,
+body.on-duty #hudStamina, body.on-duty #hudThirst { display: none !important; }
 /* … im Edit-Mode bleiben sie (gedimmt) sichtbar, damit man sie wieder einblenden kann */
 body.bf-edit .bf-ghost { opacity: .32 !important; filter: grayscale(.55); }
 /* Auge-Umschalter oben links am Element */
@@ -968,18 +975,25 @@ button:not(.secondary):not(.dock-btn):not(.theme-sw):hover::before { animation: 
   filter: drop-shadow(0 3px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 14px rgba(var(--accent-rgb),0.45)); }
 body.bf-noblitz #logoFx { filter: drop-shadow(0 3px 9px rgba(0,0,0,0.55)); }
 
-/* Lebensanzeige (Herz) — permanent sichtbar, skalierbar via --info-scale */
-#hudHeart { position: fixed; top: 96px; left: 16px; width: 198px; z-index: 55;
+/* Lebensanzeige (5 eigenständige Waben: HP/Grow/Essen/Ausdauer/Durst) — jede permanent
+   sichtbar, einzeln verschiebbar + skalierbar via --info-scale (siehe MOVABLE in overlay.js).
+   Default-Position bildet das frühere fusionierte Dreieck nach. */
+#hudHP, #hudGrow, #hudHunger, #hudStamina, #hudThirst { position: fixed; width: 66px; z-index: 55;
   display: flex; flex-direction: column; align-items: center;
-  transform-origin: top left; transform: scale(var(--info-scale, 1)); --heart-color: #ef4444; }
-#hudHeart svg { width: 100%; height: auto; overflow: visible;
+  transform-origin: top left; transform: scale(var(--info-scale, 1)); }
+#hudHP { top: 94px; left: 50px; --heart-color: #ef4444; }
+#hudGrow { top: 94px; left: 113px; }
+#hudHunger { top: 149px; left: 82px; }
+#hudStamina { top: 204px; left: 50px; }
+#hudThirst { top: 204px; left: 113px; }
+#hudHP svg, #hudGrow svg, #hudHunger svg, #hudStamina svg, #hudThirst svg { width: 100%; height: auto; overflow: visible;
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6)) drop-shadow(0 0 7px rgba(var(--accent-rgb),0.55)); }
-#hudHeart svg text { font-variant-numeric: tabular-nums; paint-order: stroke;
-  stroke: rgba(0,0,0,0.55); stroke-width: 0.6px; }
+#hudHP svg text, #hudGrow svg text, #hudHunger svg text, #hudStamina svg text, #hudThirst svg text {
+  font-variant-numeric: tabular-nums; paint-order: stroke; stroke: rgba(0,0,0,0.55); stroke-width: 0.6px; }
 #heartVal { margin-top: 2px; font-size: 19px; font-weight: 900; color: #fff; letter-spacing: .3px;
   text-shadow: 0 1px 3px #000, 0 0 8px var(--heart-color); font-variant-numeric: tabular-nums; }
-@keyframes heartBeat { 0%,100% { transform: scale(1); } 14% { transform: scale(1.1); } 28% { transform: scale(1); } 42% { transform: scale(1.05); } 56% { transform: scale(1); } }
-body.bf-noblitz #hudHeart svg { animation: none; }
+body.bf-noblitz #hudHP svg, body.bf-noblitz #hudGrow svg, body.bf-noblitz #hudHunger svg,
+body.bf-noblitz #hudStamina svg, body.bf-noblitz #hudThirst svg { animation: none; }
 @keyframes bfFrameFlick { 0%,100% { opacity: .42; } 18% { opacity: .72; } 37% { opacity: .48; } 55% { opacity: .78; } 78% { opacity: .52; } }
 
 /* ═══════════ Modernes Redesign: Profil · Dino-Info · Detailansicht ═══════════ */
