@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.17 — Ausdauer-Icon korrigiert
+
+### 🔧 Sonstiges
+
+- Ausdauer-Icon von Pfote auf Fußabdruck geändert (echtes Evrima-HUD
+  nutzt einen Fußabdruck fürs Ausdauer-Icon).
+
 ## v1.11.16 — Vitals-Waben vergrößert
 
 ### 🔧 Sonstiges
