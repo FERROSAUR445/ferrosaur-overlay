@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.7 — Kompass zeigt "auf dem Server" korrekt an
+
+### 🐛 Fehlerbehoben
+
+- Der Kompass zeigte dauerhaft "nicht im Spiel", obwohl man erkannt wurde — er
+  verlangte eine Blickrichtung, die RCON nicht liefert. Nutzt jetzt die aus der
+  Bewegung berechnete Richtung als Ersatz.
+
 ## v1.11.6 — Skin-Menü speichert (noch ohne Live-Anwendung)
 
 ### ✨ Neu

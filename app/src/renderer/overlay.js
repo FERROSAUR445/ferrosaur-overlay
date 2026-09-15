@@ -549,15 +549,18 @@ function applyCompassToggle() {
 function toggleCompass() { compassHidden = !compassHidden; localStorage.setItem('bf-hide-compass', compassHidden ? '1' : '0'); applyCompassToggle(); }
 function compassLoop() {
   compassRAF = requestAnimationFrame(compassLoop);
-  const online = me && typeof me.heading === 'number';
+  // Siehe renderCompass(): me.heading gibt es nicht (RCON liefert keine Blickrichtung) -
+  // dieselbe Fallback-Logik auf die bewegungsbasierte Richtung (me.dirAngle) hier ebenfalls.
+  const online = me && typeof me.x === 'number';
   const hide = compassHidden || (me && me.isSpectating); // Fly-Mode: keine Blickrichtung → Kompass aus
   compassSetHidden(hide);
   if (hide) { compassHd = null; return; }
   if (!online) { compassHd = null; renderCompass(); return; }
+  const myHeading = typeof me.heading === 'number' ? me.heading : (me.dirAngle || 0);
   if (compassHd == null) {
-    compassHd = me.heading;
+    compassHd = myHeading;
   } else {
-    const d = ((me.heading - compassHd + 540) % 360) - 180; // kürzester Winkelweg (Wrap bei 360°)
+    const d = ((myHeading - compassHd + 540) % 360) - 180; // kürzester Winkelweg (Wrap bei 360°)
     compassHd = cmpNorm(compassHd + d * 0.3);                // 0.3/Frame → weich, folgt aber schnell
   }
   renderCompass();
@@ -585,9 +588,13 @@ function renderCompass() {
   ctx.fillStyle = 'rgba(12,16,22,0.66)'; cmpRoundRect(ctx, 0, 12, W, H - 14, 9); ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 1; ctx.stroke();
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const online = me && typeof me.heading === 'number' && typeof me.x === 'number';
+  // RCON liefert keine Blickrichtung (nur Position) - me.heading ist deshalb nie gesetzt.
+  // Fallback auf die aus Positions-Deltas berechnete Bewegungsrichtung (computeMoveAngles),
+  // sonst zeigte der Kompass IMMER "nicht im Spiel", obwohl man laengst erkannt wird.
+  const online = me && typeof me.x === 'number';
   if (!online) { ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '11px sans-serif'; ctx.fillText('🧭 nicht im Spiel', cx, H / 2 + 2); return; }
-  const hd = (compassHd != null ? compassHd : me.heading), halfW = W / 2 - 10;
+  const myHeading = typeof me.heading === 'number' ? me.heading : (me.dirAngle || 0);
+  const hd = (compassHd != null ? compassHd : myHeading), halfW = W / 2 - 10;
   const xFor = (rel) => cx + (rel / COMPASS_HALF_FOV) * halfW;
   const vis = (rel) => Math.abs(rel) <= COMPASS_HALF_FOV;
   // Himmelsrichtungen + Zwischenrichtungen (N deutlich in Rot)
