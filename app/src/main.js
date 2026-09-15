@@ -128,7 +128,7 @@ function startLoopbackServer() {
 }
 
 // The-Isle-Client-Prozesse (Overlay erscheint nur wenn das Spiel läuft)
-const GAME_PROCESSES = ['TheIsle-Win64-Shipping.exe', 'TheIsle.exe'];
+const GAME_PROCESSES = ['TheIsle-Win64-Shipping.exe', 'TheIsleClient-Win64-Shipping.exe', 'TheIsle.exe'];
 function isGameRunning() {
   return new Promise((resolve) => {
     if (process.platform !== 'win32') return resolve(true); // Dev (Mac/Linux): immer anzeigen
@@ -210,7 +210,7 @@ function ensureGeoProbe() {
     ' [DllImport("user32.dll")] public static extern bool GetClientRect(IntPtr h, out RECT r);\n' +
     ' [DllImport("user32.dll")] public static extern bool ClientToScreen(IntPtr h, ref POINT p);\n' +
     ' public static string Rect(){\n' +
-    '  foreach(var n in new string[]{"TheIsle-Win64-Shipping","TheIsle"}){\n' +
+    '  foreach(var n in new string[]{"TheIsle-Win64-Shipping","TheIsleClient-Win64-Shipping","TheIsle"}){\n' +
     '   foreach(var pr in Process.GetProcessesByName(n)){\n' +
     '    IntPtr h=pr.MainWindowHandle; if(h==IntPtr.Zero) continue;\n' +
     '    RECT r; if(!GetClientRect(h,out r)) continue;\n' +

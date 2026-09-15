@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.5 — Overlay erscheint jetzt wirklich
+
+### 🐛 Fehlerbehoben
+
+- Das Overlay erkannte das Spiel nicht, weil der aktuelle Isle-Client-Prozess
+  anders heißt als angenommen. Dadurch blieb das HUD immer unsichtbar.
+
 ## v1.11.4 — Echte Live-Positionen
 
 ### ✨ Neu
