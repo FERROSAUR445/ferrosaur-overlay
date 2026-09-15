@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.27 — Login zeigt jetzt eine Fehlermeldung statt stumm zu scheitern
+
+### 🔧 Sonstiges
+
+- Wenn der Login lokal nicht abgeschlossen werden kann (meist weil eine
+  zweite Ferrosaur-Instanz noch offen ist), zeigt das Login-Fenster
+  jetzt eine klare Meldung statt einfach nichts zu tun.
+
 ## v1.11.26 — Team-Rollen: Admin/Moderator/Supporter vergeben
 
 ### 🔧 Sonstiges

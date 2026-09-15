@@ -110,6 +110,7 @@ function checkForUpdates() {
 // Das ist zuverlässiger als ein ferrosaur://-Deep-Link (Browser blocken den oft).
 const LOGIN_PORT = 53117;
 let loopbackServer = null;
+let loopbackReady = false;   // true erst NACH erfolgreichem listen() — sonst waere ein Login-Klick lautlos zum Scheitern verurteilt
 function startLoopbackServer() {
   if (loopbackServer) return;
   loopbackServer = http.createServer((req, res) => {
@@ -123,7 +124,16 @@ function startLoopbackServer() {
       } else { res.writeHead(404); res.end(); }
     } catch { res.writeHead(400); res.end(); }
   });
-  loopbackServer.on('error', (e) => { console.error('Login-Loopback fehlgeschlagen:', e.message); loopbackServer = null; });
+  // Scheitert das listen() (Port belegt - z.B. eine zweite Ferrosaur-Variante laeuft noch),
+  // blieb das bisher eine reine Konsolen-Zeile: der Login-Button oeffnete brav den Browser,
+  // Discord bestaetigte den Login, und der Ruecksprung auf 127.0.0.1 lief ins Leere - ohne
+  // jede sichtbare Fehlermeldung. loopbackReady macht den Zustand fuer open-login abfragbar.
+  loopbackServer.on('listening', () => { loopbackReady = true; });
+  loopbackServer.on('error', (e) => {
+    console.error('Login-Loopback fehlgeschlagen:', e.message);
+    loopbackReady = false;
+    loopbackServer = null;
+  });
   loopbackServer.listen(LOGIN_PORT, '127.0.0.1');
 }
 
@@ -695,7 +705,22 @@ ipcMain.handle('reset-hotkeys', () => {
   return HOTKEYS;
 });
 ipcMain.on('session-ready', (_e, token) => onSessionObtained(token));
-ipcMain.on('open-login', () => shell.openExternal(`${TOKEN_BASE}/auth/login`));
+ipcMain.on('open-login', () => {
+  // Erneut versuchen zu binden, falls der Port beim App-Start noch belegt war und inzwischen
+  // frei wurde (z.B. die andere Instanz wurde seitdem geschlossen) - kostet nichts, startLoopback-
+  // Server() ist ein no-op, wenn loopbackServer schon existiert.
+  if (!loopbackReady) startLoopbackServer();
+  if (!loopbackReady) {
+    // Bisher lief das lautlos in eine Sackgasse: Browser öffnet, Discord bestätigt, der
+    // Rücksprung auf 127.0.0.1 kommt nie an — ohne jede sichtbare Fehlermeldung. Analog zur
+    // Companion (login-error) jetzt als Text im Login-Fenster statt stummem Konsolen-Log.
+    if (loginWindow) loginWindow.webContents.send('login-error',
+      `Port ${LOGIN_PORT} ist blockiert — läuft eine zweite Ferrosaur-Instanz? Bitte alle `
+      + 'Ferrosaur-Fenster (auch im Tray) schließen und die App neu starten.');
+    return;
+  }
+  shell.openExternal(`${TOKEN_BASE}/auth/login`);
+});
 // Externen Link im Standard-Browser öffnen (z. B. RaidAtlas-Disclaimer). Nur http(s) zulassen.
 ipcMain.on('open-external', (_e, url) => {
   try { const u = new URL(String(url)); if (u.protocol === 'https:' || u.protocol === 'http:') shell.openExternal(u.href); } catch { /* ungültige URL ignorieren */ }

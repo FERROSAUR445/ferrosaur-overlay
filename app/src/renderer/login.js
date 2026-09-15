@@ -8,6 +8,7 @@ function validToken(t) {
 }
 
 el('loginBtn').onclick = () => window.bf.openLogin();
+window.bf.onLoginError((msg) => { el('err').textContent = msg; });
 
 el('manualBtn').onclick = () => {
   const t = el('manualSession').value.trim();

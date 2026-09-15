@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('bf', {
   getConfig: () => ipcRenderer.invoke('get-config'),
   sessionReady: (token) => ipcRenderer.send('session-ready', token),
   openLogin: () => ipcRenderer.send('open-login'),
+  onLoginError: (cb) => ipcRenderer.on('login-error', (_e, msg) => cb(msg)),
   openExternal: (url) => ipcRenderer.send('open-external', url),
   logout: () => ipcRenderer.send('logout'),
   setInteractive: (v) => ipcRenderer.send('set-interactive', v),
