@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.16 — Vitals-Waben vergrößert
+
+### 🔧 Sonstiges
+
+- Die HP/Rate/Grow/Ausdauer/Essen/Durst-Wabenanzeige ist jetzt größer
+  (war durch die 2. Reihe optisch geschrumpft, da die Breite gleich blieb).
+
 ## v1.11.15 — Sprecher-Box umsortiert
 
 ### 🔧 Sonstiges
