@@ -1,4 +1,4 @@
-import { Room, RoomEvent, Track, ParticipantEvent, AudioPresets } from 'livekit-client';
+﻿import { Room, RoomEvent, Track, ParticipantEvent, AudioPresets } from 'livekit-client';
 import { loadMapImage, drawFullMap, drawMinimap, drawHeatmap, normToWorld, worldToNorm, zoneAt, zonesAt, resetCal, solveAffine, getCal, setCalAffine, setZones, newZone, ZONES, ZONE_TYPES, ZONE_META, loadZoneLayer, setZoneLayer, isZoneLayerVisible, setGoldenZone, goldenZoneCenter, groupColorFor, setMarkerStyle, drawAiEncounters } from './map.js';
 import { THEMES, makeTheme, aboIndex } from './shared/theme.js';
 import { el, apiErr, makeApi, makeApiAction, armConfirm } from './shared/core.js';
@@ -4261,7 +4261,6 @@ function toggleFeature(id) {
   else if (id === 'skinEditor') renderSkinEditor();
   else if (id === 'quests') { loadQuest(); startQuestPoll(); }
   else if (id === 'lootbox') renderLootbox();
-  else if (id === 'support') { renderSupport(); startSupportPoll(); }
   else if (id === 'notifications') renderNotifications();
   else if (id === 'leaderboard') renderLeaderboard();
   el(id).style.display = 'block';
@@ -4273,10 +4272,9 @@ function closeAllFeatures(skipInteractive) {
     revertSkinPreview();
     showToast('🎨 Vorschau verworfen — Skin zurückgesetzt', '');
   }
-  ['dinoInfo', 'skinEditor', 'garage', 'market', 'group', 'profile', 'lexikon', 'quests', 'leaderboard', 'lootbox', 'support', 'notifications'].forEach((id) => { el(id).style.display = 'none'; });
+  ['dinoInfo', 'skinEditor', 'garage', 'market', 'group', 'profile', 'lexikon', 'quests', 'leaderboard', 'lootbox', 'notifications'].forEach((id) => { el(id).style.display = 'none'; });
   const tc = el('ticketChat'); if (tc) tc.style.display = 'none';   // Ticket-Chat mit schließen
   stopQuestPoll();
-  stopSupportPoll();
   if (featureOpen === 'dinoInfo') stopDinoInfo();
   featureOpen = null;
   if (!skipInteractive) updateInteractive();
@@ -4901,319 +4899,6 @@ function renderTicketChat(modal, channelId, ticketId, category, messages) {
     <div style="margin-top:10px;font-size:11px;color:var(--muted)">Zum Antworten ins Discord-Ticket schreiben.</div>`;
   el('ticketChatClose').onclick = closeTicketChat;
   const sc = el('ticketChatScroll'); if (sc) sc.scrollTop = sc.scrollHeight;   // ans Ende scrollen (neueste sichtbar)
-}
-
-// ── 🆘 Support-Panel (Tickets im Overlay, immer synchron mit Discord) ─────────
-// Spieler öffnen Hilfe-/Melde-Tickets, schreiben im Overlay; Team kann annehmen,
-// schreiben, weiterleiten (Rolle/Person) und schließen (mit Grund). Schreiben geht
-// direkt über den token-service in den Discord-Channel; Öffnen/Annehmen/Weiterleiten/
-// Schließen läuft über eine Request-Queue, die der Bot-Job abarbeitet.
-let supTickets = [];          // Liste der sichtbaren Tickets
-let supSel = null;            // ausgewählter channelId
-let supCfg = null;            // /me/ticket-config (Kategorien, isStaff, Weiterleit-Ziele)
-let supMessages = [];         // Nachrichten des ausgewählten Tickets
-let supComposing = false;     // gerade „Neues Ticket"-Formular offen
-let supListTimer = null, supMsgTimer = null;
-
-function startSupportPoll() {
-  stopSupportPoll();
-  supListTimer = setInterval(() => { if (featureOpen === 'support' && !supComposing) loadSupportTickets(); }, 6000);
-  supMsgTimer = setInterval(() => { if (featureOpen === 'support' && supSel && !supComposing) loadSupportMessages(); }, 4000);
-}
-function stopSupportPoll() {
-  if (supListTimer) clearInterval(supListTimer); supListTimer = null;
-  if (supMsgTimer) clearInterval(supMsgTimer); supMsgTimer = null;
-  const m = el('supPicker'); if (m) m.style.display = 'none';
-}
-
-async function renderSupport() {
-  const panel = el('support');
-  panel.classList.add('sup-wide');
-  panel.innerHTML = `
-    <div class="sup-head">
-      <h2 style="margin:0">🆘 Support</h2>
-      <div style="display:flex;gap:8px">
-        <button id="supNew" style="width:auto;flex:none;padding:8px 14px">➕ Neues Ticket</button>
-        <button class="closeFeature secondary" style="width:auto;flex:none;padding:8px 14px">Schließen</button>
-      </div>
-    </div>
-    <div class="sup-body">
-      <div id="supTickets" class="sup-list"><div class="sup-empty">Lädt…</div></div>
-      <div id="supChat" class="sup-chat"><div class="sup-empty">Wähle links ein Ticket – oder öffne oben ein neues.</div></div>
-    </div>`;
-  panel.querySelector('.closeFeature').onclick = () => closeAllFeatures();
-  el('supNew').onclick = openSupportTicketForm;
-  await loadSupportConfig();
-  await loadSupportTickets();
-  if (supSel && supTickets.some((t) => t.channelId === supSel)) loadSupportMessages();
-}
-
-async function loadSupportConfig() {
-  if (!sessionToken) return;
-  try {
-    const r = await fetch(`${config.tokenBase}/me/ticket-config`, { headers: { Authorization: `Bearer ${sessionToken}` } });
-    if (r.ok) supCfg = await r.json();
-  } catch {}
-}
-
-async function loadSupportTickets() {
-  if (!sessionToken) return;
-  try {
-    const r = await fetch(`${config.tokenBase}/me/tickets`, { headers: { Authorization: `Bearer ${sessionToken}` } });
-    if (!r.ok) return;
-    supTickets = (await r.json()).tickets || [];
-  } catch { return; }
-  // Erstmalig gesehene Tickets in die Seen-Map aufnehmen (Toasts macht der globale loadMyTickets-Poll).
-  const seen = ticketSeen(); let changed = false;
-  for (const t of supTickets) { if (!(t.channelId in seen)) { seen[t.channelId] = t.lastMessageAt || 0; changed = true; } }
-  if (changed) setTicketSeen(seen);
-  if (featureOpen === 'support' && !supComposing) renderSupTicketList();
-}
-
-function supCat(id) { return (supCfg && supCfg.categories && supCfg.categories.find((c) => c.id === id)) || { id, label: id || '', emoji: '🎫' }; }
-function supCatLabel(id) { return supCat(id).label || id || ''; }
-
-function renderSupTicketList() {
-  const box = el('supTickets'); if (!box) return;
-  if (!supTickets.length) { box.innerHTML = '<div class="sup-empty">Keine Tickets.<br>Öffne oben ein neues.</div>'; return; }
-  const supRow = (t) => {
-    const sel = t.channelId === supSel ? ' sel' : '';
-    const inBearb = t.status === 'in_bearbeitung';
-    const stCol = inBearb ? '#22c55e' : '#f59e0b';
-    const stTxt = inBearb ? `In Bearbeitung${t.handler ? ' · ' + escapeHtml(t.handler) : ''}` : 'Offen';
-    const neu = t.lastFromOther ? '<span class="sup-dot"></span>' : '';
-    const roleTag = t.role === 'handler' ? '🛠️' : (t.role === 'available' ? '🆕' : '');
-    const who = (t.role !== 'opener' && t.openerName) ? ` · von ${escapeHtml(t.openerName)}` : '';
-    return `<div class="sup-trow${sel}" data-ch="${escapeHtml(t.channelId)}">
-      <div class="sup-trow-top"><b>#${t.ticketId}</b> ${roleTag}${neu}</div>
-      <div class="sup-trow-sub" style="color:${stCol}">${stTxt}${who}</div>
-    </div>`;
-  };
-  // Nach Kategorie gruppieren (Reihenfolge wie in der Config) — leichter zu unterteilen. [BFT-180]
-  const order = ((supCfg && supCfg.categories) || []).map((c) => c.id);
-  const groups = {};
-  for (const t of supTickets) { (groups[t.category] = groups[t.category] || []).push(t); }
-  const catIds = Object.keys(groups).sort((a, b) => { const ia = order.indexOf(a), ib = order.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
-  box.innerHTML = catIds.map((cid) => {
-    const c = supCat(cid);
-    return `<div class="sup-cat-head" style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:10px 2px 4px">${c.emoji || '🎫'} ${escapeHtml(c.label)} <span style="opacity:.7">· ${groups[cid].length}</span></div>${groups[cid].map(supRow).join('')}`;
-  }).join('');
-  box.querySelectorAll('.sup-trow').forEach((row) => { row.onclick = () => selectSupportTicket(row.dataset.ch); });
-}
-
-function selectSupportTicket(channelId) {
-  supSel = channelId; supComposing = false; supMessages = [];
-  renderSupTicketList();
-  loadSupportMessages();
-}
-
-async function loadSupportMessages() {
-  if (!sessionToken || !supSel) return;
-  const chat = el('supChat'); if (chat && !supMessages.length) chat.innerHTML = '<div class="sup-empty">Lädt Nachrichten…</div>';
-  try {
-    const r = await fetch(`${config.tokenBase}/me/ticket-messages?channelId=${encodeURIComponent(supSel)}`, { headers: { Authorization: `Bearer ${sessionToken}` } });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json();
-    supMessages = data.messages || [];
-    // Als gesehen markieren (löscht die „neue Antwort"-Markierung in Liste)
-    const t = supTickets.find((x) => x.channelId === supSel);
-    if (t) { const seen = ticketSeen(); seen[supSel] = t.lastMessageAt || Date.now(); setTicketSeen(seen); if (t.lastFromOther) { t.lastFromOther = false; renderSupTicketList(); } }
-    renderSupChat(data);
-  } catch {
-    if (chat && !supMessages.length) chat.innerHTML = '<div class="sup-empty" style="color:#fca5a5">Nachrichten konnten nicht geladen werden.</div>';
-  }
-}
-
-function supBubbleHtml(m) {
-  const body = escapeHtml(m.content || '') || `<i style="opacity:.6">${m.hasAttachment ? '[Anhang]' : '[leer]'}</i>`;
-  if (m.fromBot) {
-    return `<div style="margin:8px 0;text-align:center"><div style="display:inline-block;max-width:92%;padding:7px 11px;border-radius:10px;background:rgba(var(--accent-rgb),0.10);border:1px solid var(--border);color:var(--muted);font-size:12px;line-height:1.35">🤖 <b style="color:var(--accent-2)">${escapeHtml(m.author)}</b> · ${body}</div></div>`;
-  }
-  const mine = m.fromMe;
-  return `<div style="display:flex;flex-direction:column;align-items:${mine ? 'flex-end' : 'flex-start'};margin-bottom:9px">
-    <div style="font-size:10px;color:var(--muted);margin-bottom:2px">${mine ? 'Du' : escapeHtml(m.author)} · ${fmtEventTime(m.at ? new Date(m.at).toISOString() : '')}</div>
-    <div style="max-width:85%;padding:8px 11px;border-radius:12px;font-size:13px;line-height:1.35;${mine
-      ? 'background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;border-bottom-right-radius:4px'
-      : 'background:rgba(255,255,255,0.06);color:#eee;border-bottom-left-radius:4px'}">${body}</div>
-  </div>`;
-}
-
-function renderSupChat(data) {
-  const chat = el('supChat'); if (!chat) return;
-  // Entwurf im Eingabefeld über Re-Renders (Polling) hinweg erhalten
-  const prev = el('supInput'); const draft = prev ? prev.value : ''; const focused = document.activeElement === prev; const caret = prev ? prev.selectionStart : null;
-  const t = supTickets.find((x) => x.channelId === supSel);
-  const staff = !!(supCfg && supCfg.isStaff);
-  const role = t ? t.role : null;
-  const catLabel = supCatLabel((t && t.category) || (data && data.category));
-  let actions = '';
-  if (staff) {
-    if (role === 'available') actions += `<button id="supClaim" style="width:auto;flex:none;padding:6px 12px;font-size:12px">✋ Annehmen</button>`;
-    if (role === 'handler' || role === 'available') {
-      actions += `<button id="supForward" class="secondary" style="width:auto;flex:none;padding:6px 12px;font-size:12px">↗️ Weiterleiten</button>`;
-      actions += `<button id="supClose" class="secondary" style="width:auto;flex:none;padding:6px 12px;font-size:12px">🔒 Schließen</button>`;
-    }
-  }
-  const bubbles = (supMessages || []).map(supBubbleHtml).join('') || '<div class="sup-empty">Noch keine Nachrichten in diesem Ticket.</div>';
-  const tid = (data && data.ticketId != null) ? data.ticketId : (t ? t.ticketId : '');
-  chat.innerHTML = `
-    <div class="sup-chat-head">
-      <div><b>🎫 #${tid}</b> <span style="color:var(--muted);font-size:12px">· ${escapeHtml(catLabel)}</span></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${actions}</div>
-    </div>
-    <div id="supScroll" class="sup-scroll">${bubbles}</div>
-    <div class="sup-compose">
-      <input id="supInput" class="tm-input" style="flex:1" placeholder="Nachricht schreiben…" maxlength="1500">
-      <button id="supSend" style="width:auto;flex:none;padding:9px 16px">Senden</button>
-    </div>`;
-  const sc = el('supScroll'); if (sc) sc.scrollTop = sc.scrollHeight;
-  const ni = el('supInput'); if (ni) { ni.value = draft; if (focused) { ni.focus(); if (caret != null) { try { ni.setSelectionRange(caret, caret); } catch {} } } }
-  el('supSend').onclick = () => sendSupportMsg();
-  el('supInput').onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendSupportMsg(); } };
-  if (el('supClaim')) el('supClaim').onclick = supClaim;
-  if (el('supForward')) el('supForward').onclick = supForward;
-  if (el('supClose')) el('supClose').onclick = supClose;
-}
-
-async function sendSupportMsg() {
-  const inp = el('supInput'); if (!inp || !supSel) return;
-  const message = inp.value.trim(); if (!message) return;
-  inp.value = ''; inp.disabled = true;
-  try {
-    const r = await fetch(`${config.tokenBase}/me/ticket-send`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ channelId: supSel, message }) });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) { showToast(apiErr(d, 'Senden fehlgeschlagen'), 'error'); inp.value = message; }
-    else { await loadSupportMessages(); }
-  } catch { showToast('Senden fehlgeschlagen', 'error'); inp.value = message; }
-  if (el('supInput')) { el('supInput').disabled = false; el('supInput').focus(); }
-}
-
-function openSupportTicketForm() {
-  supComposing = true; supSel = null; supMessages = [];
-  renderSupTicketList();
-  const chat = el('supChat'); if (!chat) return;
-  // Nur selbst öffenbare Kategorien anbieten (Bewerbungen laufen über Discord, open=false). [BFT-180]
-  const cats = ((supCfg && supCfg.categories) || [{ id: 'help', label: 'Frage / Hilfe', emoji: '❓' }, { id: 'report', label: 'Spieler melden', emoji: '🚨' }]).filter((c) => c.open !== false);
-  let cat = cats[0].id; let known = true;
-  chat.innerHTML = `
-    <div class="sup-chat-head"><div><b>➕ Neues Ticket</b></div></div>
-    <div class="sup-scroll" style="display:block">
-      <div class="tm-form" style="max-width:480px">
-        <label>Kategorie</label>
-        <div id="supCatRow" style="display:flex;gap:8px;flex-wrap:wrap">
-          ${cats.map((c, i) => `<button class="sup-cat secondary${i === 0 ? ' on' : ''}" data-cat="${c.id}" style="width:auto;flex:none;padding:8px 14px">${c.emoji || ''} ${escapeHtml(c.label)}</button>`).join('')}
-        </div>
-        <div id="supReportBox" style="display:none">
-          <label>Kennst du den gemeldeten Spieler?</label>
-          <div style="display:flex;gap:8px">
-            <button id="supKnownYes" class="secondary on" style="width:auto;flex:none;padding:7px 12px">Ja, bekannt</button>
-            <button id="supKnownNo" class="secondary" style="width:auto;flex:none;padding:7px 12px">Unbekannt</button>
-          </div>
-          <label id="supTargetLbl">Name / SteamID des Spielers</label>
-          <input id="supTarget" class="tm-input" placeholder="z. B. Spielername oder 7656…" maxlength="100">
-        </div>
-        <label>Beschreibung</label>
-        <textarea id="supDesc" class="tm-input" rows="5" placeholder="Beschreibe dein Anliegen…" maxlength="1500"></textarea>
-        <button id="supSubmit" style="margin-top:10px">Ticket erstellen</button>
-      </div>
-    </div>`;
-  const refresh = () => {
-    chat.querySelectorAll('.sup-cat').forEach((b) => b.classList.toggle('on', b.dataset.cat === cat));
-    el('supReportBox').style.display = cat === 'report' ? 'block' : 'none';
-  };
-  chat.querySelectorAll('.sup-cat').forEach((b) => { b.onclick = () => { cat = b.dataset.cat; refresh(); }; });
-  el('supKnownYes').onclick = () => { known = true; el('supKnownYes').classList.add('on'); el('supKnownNo').classList.remove('on'); el('supTargetLbl').style.display = ''; el('supTarget').style.display = ''; };
-  el('supKnownNo').onclick = () => { known = false; el('supKnownNo').classList.add('on'); el('supKnownYes').classList.remove('on'); el('supTargetLbl').style.display = 'none'; el('supTarget').style.display = 'none'; };
-  el('supSubmit').onclick = () => submitSupportTicket(cat, () => known);
-  refresh();
-}
-
-async function submitSupportTicket(category, getKnown) {
-  const desc = (el('supDesc') ? el('supDesc').value : '').trim();
-  if (!desc) { showToast('Bitte beschreibe dein Anliegen.', 'error'); return; }
-  const body = { category, message: desc };
-  if (category === 'report') { const known = getKnown(); body.reportKnown = known; body.reportTarget = known ? (el('supTarget') ? el('supTarget').value.trim() : '') : ''; }
-  const btn = el('supSubmit'); if (btn) btn.disabled = true;
-  try {
-    const r = await fetch(`${config.tokenBase}/me/ticket-open`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) { showToast(apiErr(d, 'Konnte Ticket nicht öffnen'), 'error'); if (btn) btn.disabled = false; return; }
-    showToast('🎫 Ticket wird erstellt…', 'success');
-    supComposing = false;
-    const chat = el('supChat'); if (chat) chat.innerHTML = '<div class="sup-empty">🎫 Dein Ticket wird angelegt – gleich erscheint es links in der Liste.</div>';
-    setTimeout(loadSupportTickets, 1500);
-    setTimeout(loadSupportTickets, 4000);
-  } catch { showToast('Konnte Ticket nicht öffnen', 'error'); if (btn) btn.disabled = false; }
-}
-
-// Team-Aktionen (annehmen/weiterleiten/schließen) → Request-Queue, Bot-Job arbeitet sie ab
-async function supAction(path, body, okMsg) {
-  try {
-    const r = await fetch(`${config.tokenBase}${path}`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) { showToast(apiErr(d, 'Aktion fehlgeschlagen'), 'error'); return false; }
-    if (okMsg) showToast(okMsg, 'success');
-    setTimeout(loadSupportTickets, 1500);
-    setTimeout(() => { if (supSel && featureOpen === 'support') loadSupportMessages(); }, 1800);
-    return true;
-  } catch { showToast('Aktion fehlgeschlagen', 'error'); return false; }
-}
-function supClaim() { if (supSel) supAction('/me/ticket-claim', { channelId: supSel }, '✋ Ticket angenommen'); }
-
-function supModalEl() {
-  let m = el('supPicker');
-  if (!m) {
-    m = document.createElement('div'); m.id = 'supPicker';
-    m.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:80;'
-      + 'width:clamp(320px,30vw,420px);max-height:70vh;display:none;flex-direction:column;'
-      + 'background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;'
-      + 'box-shadow:var(--glow-strong);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur)';
-    document.body.appendChild(m);
-  }
-  return m;
-}
-function supCloseModal() { const m = el('supPicker'); if (m) m.style.display = 'none'; updateInteractive(); }
-
-function supForward() {
-  if (!supSel || !supCfg) return;
-  const m = supModalEl(); m.style.display = 'flex';
-  const roles = supCfg.roles || []; const users = supCfg.users || [];
-  m.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b>↗️ Ticket weiterleiten</b><button id="supPkClose" class="secondary" style="width:auto;flex:none;padding:4px 11px">✕</button></div>
-    <label style="font-size:11px;color:var(--muted)">An Rolle</label>
-    <select id="supFwRole" class="tm-input"><option value="">— Rolle wählen —</option>${roles.map((r) => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}</option>`).join('')}</select>
-    <div style="margin-top:8px">${userSearchHTML('supFwUser', users, 'oder an Person', 'Discord-Name tippen…')}</div>
-    <button id="supFwGo" style="margin-top:14px">Weiterleiten</button>`;
-  el('supPkClose').onclick = supCloseModal;
-  el('supFwRole').onchange = () => { if (el('supFwRole').value) el('supFwUser').value = ''; };
-  el('supFwUser').oninput = () => { if (el('supFwUser').value) el('supFwRole').value = ''; };
-  el('supFwGo').onclick = async () => {
-    const roleId = el('supFwRole').value;
-    const uSel = resolveUserInput('supFwUser', users);
-    const userId = uSel ? uSel.discordId : '';
-    if (!roleId && !userId) { showToast('Bitte Rolle oder Person wählen', 'error'); return; }
-    const ok = await supAction('/me/ticket-forward', userId ? { channelId: supSel, targetType: 'user', targetId: userId } : { channelId: supSel, targetType: 'role', targetId: roleId }, '↗️ Weitergeleitet');
-    if (ok) supCloseModal();
-  };
-  updateInteractive();
-}
-
-function supClose() {
-  if (!supSel) return;
-  const m = supModalEl(); m.style.display = 'flex';
-  m.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b>🔒 Ticket schließen</b><button id="supPkClose" class="secondary" style="width:auto;flex:none;padding:4px 11px">✕</button></div>
-    <label style="font-size:11px;color:var(--muted)">Grund (wird im Transcript vermerkt)</label>
-    <textarea id="supCloseReason" class="tm-input" rows="4" placeholder="z. B. Anliegen gelöst…" maxlength="500"></textarea>
-    <button id="supCloseGo" style="margin-top:14px">Ticket schließen</button>`;
-  el('supPkClose').onclick = supCloseModal;
-  el('supCloseGo').onclick = async () => {
-    const reason = (el('supCloseReason').value || '').trim();
-    if (!reason) { showToast('Bitte einen Grund angeben', 'error'); return; }
-    const ok = await supAction('/me/ticket-close', { channelId: supSel, reason }, '🔒 Ticket geschlossen');
-    if (ok) { supCloseModal(); supSel = null; supMessages = []; const c = el('supChat'); if (c) c.innerHTML = '<div class="sup-empty">Ticket geschlossen.</div>'; setTimeout(loadSupportTickets, 1500); }
-  };
-  updateInteractive();
 }
 
 // ── Quests (RP-Challenge: Dino + Handicap + Kleinigkeit + RP-Rolle) ───────────
@@ -7494,7 +7179,6 @@ function closeAllPanels() {
 const dockSvg = (inner) => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
 const DOCK_ICONS = {
   profile:  dockSvg('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
-  support:  dockSvg('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/>'),
   dino:     dockSvg('<path d="M22 12h-2.5l-2 7-4-18-3 11H2"/>'),
   group:    dockSvg('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
   lexikon:  dockSvg('<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>'),

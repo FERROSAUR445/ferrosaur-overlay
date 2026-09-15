@@ -617,23 +617,7 @@ body.bf-edit #growTimer, body.bf-edit #goldenHud, body.bf-edit #parkWarn, body.b
 .lex-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .lex-col-head { font-weight: 700; font-size: 13px; padding-bottom: 7px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
 .lex-col-list { max-height: 56vh; overflow: auto; padding-right: 2px; }
-/* 🆘 Support-Panel (Ticket-Liste links + Chat rechts) */
-#support.sup-wide { width: clamp(740px, 86vw, 1100px); max-width: 96vw; }
-.sup-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-.sup-body { display: flex; gap: 16px; height: 64vh; }
-.sup-list { width: 32%; min-width: 220px; flex: none; overflow: auto; padding-right: 4px; display: flex; flex-direction: column; }
-.sup-chat { flex: 1; min-width: 0; display: flex; flex-direction: column; border-left: 1px solid var(--border); padding-left: 16px; }
-.sup-trow { padding: 9px 11px; margin-bottom: 7px; border: 1px solid var(--border); border-radius: 10px; background: rgba(255,255,255,0.03); cursor: pointer; transition: background .12s; }
-.sup-trow:hover { background: rgba(var(--accent-rgb),0.12); }
-.sup-trow.sel { background: rgba(var(--accent-rgb),0.22); border-color: rgba(var(--accent-rgb),0.6); }
-.sup-trow-top { font-size: 13px; display: flex; align-items: center; gap: 6px; }
-.sup-trow-sub { font-size: 11px; margin-top: 3px; }
-.sup-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; box-shadow: 0 0 6px #22c55e; margin-left: auto; }
-.sup-chat-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--border); }
-.sup-scroll { flex: 1; overflow: auto; padding-right: 4px; }
-.sup-compose { display: flex; gap: 8px; margin-top: 10px; }
-.sup-empty { color: var(--muted); font-size: 13px; text-align: center; margin: auto; padding: 20px; line-height: 1.5; }
-.sup-cat.on, button.secondary.on { background: rgba(var(--accent-rgb),0.3) !important; color: #fff !important; border-color: rgba(var(--accent-rgb),0.6) !important; }
+button.secondary.on { background: rgba(var(--accent-rgb),0.3) !important; color: #fff !important; border-color: rgba(var(--accent-rgb),0.6) !important; }
 /* Quests (F? / Dock) */
 #quests.q-wide { width: clamp(620px, 60vw, 860px); max-width: 96vw; }
 .q-types { display: flex; gap: 12px; margin: 6px 0 4px; }

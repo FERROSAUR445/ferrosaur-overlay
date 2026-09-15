@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+## v1.11.21 — Support-Button entfernt
+
+### 🔧 Sonstiges
+
+- Der Support-Button im Dock ist wieder raus.
+
 ## v1.11.20 — Rate-Wabe entfernt, HP auf Grow-Ebene
 
 ### 🔧 Sonstiges
