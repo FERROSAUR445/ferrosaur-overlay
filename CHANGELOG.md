@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.32 — Overlay-Fenster bleibt immer offen
+
+### 🔧 Sonstiges
+
+- Das Overlay beendet sich nicht mehr automatisch und blendet sich
+  nicht mehr aus, wenn The Isle nicht läuft oder nicht im Vordergrund
+  ist. Das Fenster bleibt immer sichtbar — nutzbar auch ohne laufendes
+  Spiel (z. B. für Settings/Team/Admin).
+
 ## v1.11.31 — Kompass folgt jetzt korrekt der Bewegung
 
 ### 🐛 Fehlerbehoben

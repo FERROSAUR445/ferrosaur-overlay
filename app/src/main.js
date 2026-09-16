@@ -368,7 +368,6 @@ function setHotkeysActive(active) {
 
 let gameWatchTimer = null;
 let gameWasRunning = false; // war The Isle beim letzten Tick schon einmal an?
-let gameMissCount = 0;      // aufeinanderfolgende "nicht erkannt"-Ticks (Entprellung)
 let fgHideCount = 0;        // aufeinanderfolgende "nicht im Vordergrund"-Ticks (Hysterese)
 function startGameWatch() {
   startForegroundWatch();
@@ -378,41 +377,34 @@ function startGameWatch() {
     if (!overlayWindow) return;
     const running = await isGameRunning();
     if (!running) {
-      // War das Spiel an und ist jetzt aus → App beenden. Erst nach 2 Aussetzern
-      // in Folge (ein einzelner tasklist-Hänger soll das Overlay nicht killen).
-      if (gameWasRunning && process.platform === 'win32') {
-        gameMissCount++;
-        if (gameMissCount >= 2) {
-          gameWasRunning = false;
-          isQuitting = true;
-          app.quit();
-          return;
-        }
-        return; // einmaliger Aussetzer → Fenster sichtbar lassen, abwarten
-      }
-      if (overlayWindow.isVisible()) {
+      // Spiel laeuft nicht (mehr) - Fenster bleibt trotzdem sichtbar (auf Wunsch: das
+      // Overlay soll auch OHNE laufendes Spiel nutzbar bleiben, z.B. fuer Settings/Team/
+      // Admin). App wird NICHT mehr beendet, Fenster wird NICHT mehr versteckt. Voice/
+      // State-Aufraeumen (game-closed) passiert weiterhin genau EINMAL beim Uebergang
+      // laufend->nicht laufend, nicht bei jedem Tick.
+      if (gameWasRunning) {
+        gameWasRunning = false;
         try { overlayWindow.webContents.send('game-closed'); } catch {}
-        overlayWindow.hide();
       }
-      setHotkeysActive(false);
+      fgHideCount = 0;
+      if (!overlayWindow.isVisible()) overlayWindow.showInactive();
       return;
     }
-    gameMissCount = 0;
     gameWasRunning = true;
     if (process.platform !== 'win32') syncOverlayToGameWindow();
     else applyGameRectWin();   // Windows: Overlay dem (windowed) Spielfenster nachführen
-    // Läuft → nur sichtbar UND mit aktiven Hotkeys, wenn The Isle im Vordergrund ist.
-    // Hysterese: erst nach 2 "nicht im Vordergrund"-Ticks ausblenden (kein Flackern).
+    if (!overlayWindow.isVisible()) overlayWindow.showInactive();
+    // Hotkeys/Panel-Auto-Schliessen bleiben ans Vordergrund-Verhalten gekoppelt (nur
+    // relevant WAEHREND das Spiel laeuft) - die Sichtbarkeit selbst haengt nicht mehr dran.
+    // Hysterese: erst nach 2 "nicht im Vordergrund"-Ticks umschalten (kein Flackern).
     const fg = isGameForeground();
     if (fg) {
       fgHideCount = 0;
-      if (!overlayWindow.isVisible()) overlayWindow.showInactive();
       setHotkeysActive(true);
       try { overlayWindow.webContents.send('game-focus', true); } catch {}
     } else {
       fgHideCount++;
       if (fgHideCount >= 2) {
-        if (overlayWindow.isVisible()) overlayWindow.hide();
         setHotkeysActive(false);
         try { overlayWindow.webContents.send('game-focus', false); } catch {}
       }
