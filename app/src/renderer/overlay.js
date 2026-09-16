@@ -5825,7 +5825,12 @@ function showDinoDetail(card, ctx) {
   }
   else if (ctx.mode === 'market') action = ctx.mine ? `<div class="price-tag" style="margin-bottom:8px">Dein Angebot · ${(ctx.price || 0).toLocaleString('de-DE')} Pkt.</div><button id="ddWithdraw" class="secondary" style="width:100%">↩️ Angebot zurückziehen</button>` : `<button id="ddBuy" style="width:100%;margin-top:14px">🦖 Kaufen — ${(ctx.price || 0).toLocaleString('de-DE')} Pkt.</button>`;
   box.classList.add('dd-box-wide');
-  const badges = [card.isElder ? '👑 Elder' : '', card.isPrime ? '⭐ Prime' : '', card.gender || '', card.isBleeding ? '🩸 Blutet' : '']
+  // isPrime kam nie als eigenes Feld auf Garage-Slots an (weder Admin-Grant noch Park/Swap
+  // setzten es) - Quelle der Wahrheit ist wie im Dino-Info-Live-Panel das primes-Array
+  // (5 von 10 Bedingungen erfuellt = Prime), siehe elderHTML().
+  const primesArr = Array.isArray(card.primes) ? card.primes : [];
+  const isPrimeDone = primesArr.filter(Boolean).length >= 5;
+  const badges = [card.isElder ? '👑 Elder' : '', isPrimeDone ? '⭐ Prime' : '', card.gender || '', card.isBleeding ? '🩸 Blutet' : '']
     .filter(Boolean).map((b) => `<span class="di-mchip">${b}</span>`).join('');
   box.innerHTML = `
     <div class="dd-header">
@@ -5841,6 +5846,7 @@ function showDinoDetail(card, ctx) {
       <div style="flex:1;min-width:0"><div class="sec-title">📊 Vitals</div>${vitalsHTML(card)}</div>
       <div style="flex:1;min-width:0"><div class="sec-title">🧬 Mutationen</div><div style="margin-top:6px">${mutHTML(card.mutations)}</div></div>
     </div>
+    <div style="margin-top:14px"><div class="sec-title">🏆 Prime-Fortschritt</div><div style="margin-top:6px">${elderHTML(primesArr)}</div></div>
     <div id="ddActions" style="margin-top:16px;display:flex;flex-direction:column;gap:8px">${action}<button class="secondary" id="ddClose">Schließen</button></div>`;
   el('dinoDetail').style.display = 'flex';
   box.querySelector('#ddClose').onclick = closeDinoDetail;

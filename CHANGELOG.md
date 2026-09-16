@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.33 — Prime-Fortschritt in der Garage sichtbar
+
+### 🐛 Fehlerbehoben
+
+- Geparkte/gekaufte Dinos zeigten nie einen Prime-Status oder
+  -Fortschritt, weil dieser beim Einparken/Tauschen nie mitgespeichert
+  wurde. Die Detailansicht zeigt jetzt denselben Prime-Fortschritt
+  (5 von 10 Bedingungen) wie das Live-Dino-Info-Panel.
+
 ## v1.11.32 — Overlay-Fenster bleibt immer offen
 
 ### 🔧 Sonstiges
