@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.29 — α/β/γ-Deko-Waben wieder entfernt
+
+### 🔧 Sonstiges
+
+- Die drei kleinen α/β/γ-Waben sind wieder raus. Verbundene Wabenform
+  (HP/Grow/Essen/Ausdauer/Durst als ein Block) bleibt wie sie ist.
+
 ## v1.11.28 — Lebensanzeige zurück zur verbundenen Wabenform
 
 ### 🔧 Sonstiges
