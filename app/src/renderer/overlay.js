@@ -561,7 +561,7 @@ function compassLoop() {
   compassSetHidden(hide);
   if (hide) { compassHd = null; return; }
   if (!online) { compassHd = null; renderCompass(); return; }
-  const myHeading = typeof me.heading === 'number' ? me.heading : (me.dirAngle || 0);
+  const myHeading = typeof me.heading === 'number' ? me.heading : dirAngleToHeading(me.dirAngle || 0);
   if (compassHd == null) {
     compassHd = myHeading;
   } else {
@@ -585,6 +585,11 @@ const cmpNorm = (d) => ((d % 360) + 360) % 360;
 const cmpRel = (target, heading) => { let a = cmpNorm(target - heading); if (a > 180) a -= 360; return a; };
 // Welt-Delta → Peilung in Heading-Space (Umkehr von map.js: heading→(cos((h-90)°),sin((h-90)°)))
 const cmpBearing = (dx, dy) => cmpNorm(Math.atan2(dy, dx) * 180 / Math.PI + 90);
+// me.dirAngle (computeMoveAngles) ist ein roher atan2()-Wert in RADIANT, fuers Kartenpfeil-
+// Rendering in map.js so vorgesehen (arrowAngle nutzt ihn direkt in Canvas-rotate()). Der
+// Kompass arbeitet dagegen in GRAD (cmpNorm/COMPASS_NORTH_OFF) - ohne diese Umrechnung blieb
+// der Zeiger beim Bewegen quasi stehen (Radiant-Werte wie 3.14 sind als "Grad" kaum Rotation).
+const dirAngleToHeading = (rad) => cmpNorm(rad * 180 / Math.PI + 90);
 function cmpRoundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 function renderCompass() {
   if (!compassCtx) return;
@@ -598,7 +603,7 @@ function renderCompass() {
   // sonst zeigte der Kompass IMMER "nicht im Spiel", obwohl man laengst erkannt wird.
   const online = me && typeof me.x === 'number';
   if (!online) { ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '11px sans-serif'; ctx.fillText('🧭 nicht im Spiel', cx, H / 2 + 2); return; }
-  const myHeading = typeof me.heading === 'number' ? me.heading : (me.dirAngle || 0);
+  const myHeading = typeof me.heading === 'number' ? me.heading : dirAngleToHeading(me.dirAngle || 0);
   const hd = (compassHd != null ? compassHd : myHeading), halfW = W / 2 - 10;
   const xFor = (rel) => cx + (rel / COMPASS_HALF_FOV) * halfW;
   const vis = (rel) => Math.abs(rel) <= COMPASS_HALF_FOV;

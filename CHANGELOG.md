@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.31 — Kompass folgt jetzt korrekt der Bewegung
+
+### 🐛 Fehlerbehoben
+
+- Der Kompass-Zeiger drehte sich beim Laufen kaum (Rechenfehler:
+  Bewegungsrichtung wurde in Radiant berechnet, aber wie Grad benutzt).
+  Jetzt korrekt umgerechnet, der Zeiger folgt sauber deiner Bewegung.
+
 ## v1.11.30 — Garage/Markt zeigen wieder die Dino-Art
 
 ### 🐛 Fehlerbehoben
