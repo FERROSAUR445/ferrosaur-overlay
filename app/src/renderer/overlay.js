@@ -5711,15 +5711,15 @@ function paletteHTML(c) { const k = ['body', 'markings', 'underbelly', 'flank', 
 const DINO_IMG_ALIAS = { Rex: 'Tyrannosaurus', Maiasaurus: 'Maiasaura' };
 function dinoImgSrc(dinoClass) { const k = DINO_IMG_ALIAS[dinoClass] || dinoClass || ''; return 'assets/dinos/' + encodeURIComponent(k) + '.png'; }
 function dinoPreview(card, cls) {
-  return `<div class="prevwrap ${cls || ''}">${dinoPreviewSVG(card)}<img class="photo" src="${dinoImgSrc(card.dino)}" alt="" onerror="this.remove()"></div>`;
+  return `<div class="prevwrap ${cls || ''}">${dinoPreviewSVG(card)}<img class="photo" src="${dinoImgSrc(card.dinoClass)}" alt="" onerror="this.remove()"></div>`;
 }
 
 function dinoCardEl(card, onClick) {
   const d = document.createElement('div'); d.className = 'dino-card';
   // Custom-Name (Garage): als Titel, Spezies+Wachstum als Untertitel. Sonst wie bisher Spezies-Titel.
-  const title = card._name ? `🏷️ ${escapeHtml(card._name)}` : `${escapeHtml(card.dino || '')}${card.isElder ? ' 👑' : ''}`;
+  const title = card._name ? `🏷️ ${escapeHtml(card._name)}` : `${escapeHtml(card.dinoClass || '')}${card.isElder ? ' 👑' : ''}`;
   const sub = card._name
-    ? `${escapeHtml(card.dino || '')}${card.isElder ? ' 👑' : ''} · ${fmtGrow(card.grow || 0)}`
+    ? `${escapeHtml(card.dinoClass || '')}${card.isElder ? ' 👑' : ''} · ${fmtGrow(card.grow || 0)}`
     : `${card.gender || ''} · ${fmtGrow(card.grow || 0)}`;
   d.innerHTML = dinoPreview(card) + `<div class="body"><div class="nm">${title}</div><div class="mt">${sub}</div></div>` + paletteHTML(card.colors);
   d.onclick = onClick; return d;
@@ -5800,7 +5800,7 @@ function showDinoDetail(card, ctx) {
       ? `<button id="ddSellServer" class="secondary" style="width:100%">💰 An Server verkaufen (+${price.toLocaleString('de-DE')})</button>`
       : `<button id="ddSellServer" class="secondary" style="width:100%;opacity:.55;cursor:not-allowed" disabled title="Verkauf erst ab ${minPct}% Wachstum — aktuell ${growPct}% (es fehlen ${minPct - growPct}%).">💰 An Server verkaufen (ab ${minPct}%)</button>`;
     const myDino = ((me && me.dino) || '').split('_')[0];
-    const slotDino = (card.dino || '').split('_')[0];
+    const slotDino = (card.dinoClass || '').split('_')[0];
     const sameSpecies = myDino && slotDino && myDino === slotDino;
     // Ausparken (nur gleiche Spezies, aktueller Dino geht verloren) + Swapen (jede Spezies, tauscht)
     const unparkBtn = sameSpecies ? `<button id="ddUnpark" style="width:100%">⬆️ Ausparken</button>` : '';
@@ -5824,9 +5824,9 @@ function showDinoDetail(card, ctx) {
     .filter(Boolean).map((b) => `<span class="di-mchip">${b}</span>`).join('');
   box.innerHTML = `
     <div class="dd-header">
-      <div class="prevwrap ddbig">${dinoPreviewSVG(card)}<img class="photo" src="${dinoImgSrc(card.dino)}" alt="" onerror="this.remove()"></div>
+      <div class="prevwrap ddbig">${dinoPreviewSVG(card)}<img class="photo" src="${dinoImgSrc(card.dinoClass)}" alt="" onerror="this.remove()"></div>
       <div style="flex:1;min-width:0">
-        <div class="dd-nm" style="overflow:hidden;text-overflow:ellipsis">${escapeHtml(card.dino || '?')}</div>
+        <div class="dd-nm" style="overflow:hidden;text-overflow:ellipsis">${escapeHtml(card.dinoClass || '?')}</div>
         <div style="font-size:12px;color:var(--muted);margin:3px 0 9px">${fmtGrow(card.grow || 0)} Wachstum</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap">${badges}</div>
         ${paletteHTML(card.colors)}
@@ -5852,7 +5852,7 @@ function showDinoDetail(card, ctx) {
   if (ss && !ss.disabled) ss.onclick = () => {
     const price = card.serverPrice ?? 0;
     const acts = box.querySelector('#ddActions');
-    acts.innerHTML = `<div style="text-align:center;font-size:13px;margin-bottom:6px">${escapeHtml(card.dino || 'Dino')} an den Server verkaufen für <b style="color:#fbbf24">+${price.toLocaleString('de-DE')} Punkte</b>?</div>
+    acts.innerHTML = `<div style="text-align:center;font-size:13px;margin-bottom:6px">${escapeHtml(card.dinoClass || 'Dino')} an den Server verkaufen für <b style="color:#fbbf24">+${price.toLocaleString('de-DE')} Punkte</b>?</div>
       <div style="display:flex;gap:8px"><button id="ddSellYes" style="flex:1">✅ Verkaufen</button><button id="ddSellNo" class="secondary" style="flex:1">Abbrechen</button></div>`;
     acts.querySelector('#ddSellYes').onclick = () => { closeDinoDetail(); apiAction('/market/sell-server', { slotId: card.id }, `💰 An Server verkauft (+${price})`, loadGarage); };
     acts.querySelector('#ddSellNo').onclick = () => showDinoDetail(card, ctx);
@@ -6454,7 +6454,7 @@ function showSellDialog(card) {
   const serverBtn = canSell
     ? `<button id="sdServer" style="width:100%;margin-bottom:8px">💰 An Server verkaufen (+${price.toLocaleString('de-DE')})</button>`
     : `<button id="sdServer" style="width:100%;margin-bottom:8px;opacity:.55;cursor:not-allowed" disabled title="Verkauf erst ab ${minPct}% Wachstum — aktuell ${growPct}%.">💰 An Server verkaufen (ab ${minPct}%)</button>`;
-  box.innerHTML = `<div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">${dinoPreview(card, 'dd')}<div><div style="font-size:18px;font-weight:700">${card.dino}${card.isElder ? ' 👑' : ''}</div><div style="font-size:12px;color:var(--muted)">${card.gender || ''} · ${fmtGrow(card.grow || 0)}</div></div></div>
+  box.innerHTML = `<div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">${dinoPreview(card, 'dd')}<div><div style="font-size:18px;font-weight:700">${card.dinoClass}${card.isElder ? ' 👑' : ''}</div><div style="font-size:12px;color:var(--muted)">${card.gender || ''} · ${fmtGrow(card.grow || 0)}</div></div></div>
     ${serverBtn}
     <div style="display:flex;gap:6px;margin-bottom:8px">
       <input id="sdPrice" type="number" min="1" placeholder="Preis in Punkten" style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:#eee;font-size:13px">

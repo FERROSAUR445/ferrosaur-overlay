@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.30 — Garage/Markt zeigen wieder die Dino-Art
+
+### 🐛 Fehlerbehoben
+
+- Karten in Garage, Markt und Verkaufen-Dialog zeigten weder Bild noch
+  Name des Dinos (nur Platzhalter-Silhouette + "Male - 100%"). Die
+  Karten lasen ein falsches Datenfeld, jetzt korrigiert.
+
 ## v1.11.29 — α/β/γ-Deko-Waben wieder entfernt
 
 ### 🔧 Sonstiges
