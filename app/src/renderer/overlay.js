@@ -6007,11 +6007,11 @@ async function renderSkinEditor() {
 
   const swatches = SKIN_GROUPS.map(([k, l]) => `<label style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:8px;font-size:13px;cursor:pointer"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l}</span><input type="color" data-col="${k}" value="${linToHex(skinState.colors[k])}" style="width:40px;height:26px;border:0;background:none;cursor:pointer;flex:none"></label>`).join('');
   const liveMsg = skinPays
-    ? '🟢 Live-Vorschau — mit „Bestätigen" wird der Skin übernommen (50 Pkt/Farbe). Schließen ohne Bestätigen setzt zurück.'
-    : '🟢 Änderungen werden live im Spiel übernommen';
+    ? '🟡 Vorschau — mit „Bestätigen" wird der Skin gespeichert (50 Pkt/Farbe). Schließen ohne Bestätigen verwirft die Vorschau.'
+    : '🟡 Änderungen werden automatisch gespeichert';
   panel.innerHTML = `<h2>🎨 Skin Editor — ${me.dino}</h2>
     <div style="font-size:12px;color:#f59e0b;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:8px;padding:8px 10px;margin:2px 0 12px">⚠️ Deine Auswahl wird gespeichert, aber <b>noch nicht live auf deinen Dino im Spiel übertragen</b> — das kommt in einem späteren Update.</div>
-    <div id="skLive" style="font-size:12px;color:${skinPays ? '#f59e0b' : '#22c55e'};margin:2px 0 14px">${liveMsg}</div>
+    <div id="skLive" style="font-size:12px;color:#f59e0b;margin:2px 0 14px">${liveMsg}</div>
     <div class="sec-title">🎭 Rollplay-Name</div>
     <div style="font-size:11px;color:var(--muted);margin:2px 0 8px">Andere Spieler sehen diesen Namen statt deines Steam-Namens. Leer speichern = zurücksetzen.</div>
     <div style="display:flex;gap:6px;margin-bottom:14px">
@@ -6201,7 +6201,7 @@ async function applySkin(auto) {
     const d = await res.json(); if (!res.ok) throw new Error(apiErr(d));
     if (typeof d.points === 'number') setPointsHud(d.points);
     setSkinBaseline(); updateApplyCost();   // angewendeter Stand = neue Baseline (Free-Kosten ab hier neu)
-    setSkinLive(d.charged ? `🟢 Übernommen (−${d.charged} Pkt)` : '🟢 Live übernommen', '#22c55e');
+    setSkinLive(d.charged ? `🟢 Gespeichert (−${d.charged} Pkt)` : '🟢 Gespeichert', '#22c55e');
     if (!auto) showToast(d.charged ? `🎨 Skin angewendet — ${d.charged} Punkte abgebucht` : '🎨 Skin angewendet!', 'success');
   } catch (err) { setSkinLive('⚠️ ' + err.message, '#ef4444'); showToast(err.message, 'error'); }
 }
