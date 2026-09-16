@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.28 — Lebensanzeige zurück zur verbundenen Wabenform
+
+### 🔧 Sonstiges
+
+- HP/Grow/Essen/Ausdauer/Durst wieder als ein zusammenhängender Block
+  wie ursprünglich, inkl. der kleinen α/β/γ-Deko-Waben. Die Aufteilung
+  in 5 einzeln verschiebbare Waben und das Entfernen der α/β/γ-Waben
+  sind zurückgenommen.
+
 ## v1.11.27 — Login zeigt jetzt eine Fehlermeldung statt stumm zu scheitern
 
 ### 🔧 Sonstiges
@@ -37,7 +46,6 @@
   Waben statt einem festen Block. Im Edit-Mode (Settings → UI)
   kannst du jede einzeln verschieben, skalieren und ein-/ausblenden.
   Standardmäßig sieht die Anordnung weiterhin aus wie bisher.
-
 ## v1.11.23 — Nährstoff-Deko-Waben entfernt
 
 ### 🔧 Sonstiges

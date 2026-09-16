@@ -7823,12 +7823,7 @@ async function aiSpawnAt(x, y) {
 const MOVABLE = [
   { id: 'compassWrap', label: 'Kompass' },                      // Kompass-Balken oben, verschiebbar
   { id: 'minimapWrap', label: 'Minimap', resize: 'mini' },     // Part 3: verschiebbar + skalierbar
-  // Part 3b: Lebensanzeige, jede Wabe einzeln verschiebbar + skalierbar (keine feste Einheit mehr)
-  { id: 'hudHP',       label: 'HP',       resize: 'scale' },
-  { id: 'hudGrow',     label: 'Grow',     resize: 'scale' },
-  { id: 'hudHunger',   label: 'Essen',    resize: 'scale' },
-  { id: 'hudStamina',  label: 'Ausdauer', resize: 'scale' },
-  { id: 'hudThirst',   label: 'Durst',    resize: 'scale' },
+  { id: 'hudHeart',    label: 'Lebensanzeige', resize: 'scale' }, // Part 3b: Herz, verschiebbar + skalierbar
   { id: 'hudInfo',     label: 'Info-Boxen', resize: 'scale' }, // Part 4: entkoppelt verschiebbar + skalierbar
   // Timer-Anzeigen: Standard rechts neben der Punkte-Anzeige (HUD-Pille), verschiebbar + skalierbar.
   { id: 'growTimer',   label: 'Grow-Timer', resize: 'scale' },
@@ -7904,11 +7899,7 @@ function setTimerEditPreview(on) {
 // sichtbar (zum Wieder-Einblenden), erst außerhalb des Edit-Mode sind sie wirklich weg.
 const HIDEABLE = [
   { id: 'hud',         label: 'Vitalanzeige' },
-  { id: 'hudHP',       label: 'HP' },
-  { id: 'hudGrow',     label: 'Grow' },
-  { id: 'hudHunger',   label: 'Essen' },
-  { id: 'hudStamina',  label: 'Ausdauer' },
-  { id: 'hudThirst',   label: 'Durst' },
+  { id: 'hudHeart',    label: 'Lebensanzeige' },
   { id: 'minimapWrap', label: 'Minimap' },
   { id: 'hudInfo',     label: 'Voice-Infos' },   // Mikrofon / Reichweite / Zone
   { id: 'eventPanel',  label: 'Aktive Events' },
@@ -7924,11 +7915,7 @@ const HUD_TOGGLES_UI = [
   { id: 'compassWrap', label: 'Kompass',       desc: 'Himmelsrichtungs-Leiste am oberen Rand.',              hidden: () => compassHidden,               toggle: toggleCompass },
   { id: 'eventPanel',  label: 'Aktive Events', desc: 'Laufende Server-Events mit Countdown.',                hidden: () => hiddenEls.has('eventPanel'), toggle: () => toggleHidden('eventPanel') },
   { id: 'distHud',     label: 'Wander-Distanz', desc: 'Plopt auf, wenn du Distanz sammelst — zeigt Lauf/Schwimm/Flug.', hidden: () => hiddenEls.has('distHud'), toggle: () => toggleHidden('distHud') },
-  { id: 'hudHP',       label: 'HP-Wabe',       desc: 'Deine Lebenspunkte.',                                  hidden: () => hiddenEls.has('hudHP'),      toggle: () => toggleHidden('hudHP') },
-  { id: 'hudGrow',     label: 'Grow-Wabe',     desc: 'Dein Wachstumsstand.',                                 hidden: () => hiddenEls.has('hudGrow'),    toggle: () => toggleHidden('hudGrow') },
-  { id: 'hudHunger',   label: 'Essen-Wabe',    desc: 'Dein Hunger-Wert.',                                    hidden: () => hiddenEls.has('hudHunger'),  toggle: () => toggleHidden('hudHunger') },
-  { id: 'hudStamina',  label: 'Ausdauer-Wabe', desc: 'Dein Ausdauer-Wert.',                                  hidden: () => hiddenEls.has('hudStamina'), toggle: () => toggleHidden('hudStamina') },
-  { id: 'hudThirst',   label: 'Durst-Wabe',    desc: 'Dein Durst-Wert.',                                     hidden: () => hiddenEls.has('hudThirst'),  toggle: () => toggleHidden('hudThirst') },
+  { id: 'hudHeart',    label: 'Lebensanzeige', desc: 'Dein Herz-/Lebens-Balken.',                            hidden: () => hiddenEls.has('hudHeart'),   toggle: () => toggleHidden('hudHeart') },
   { id: 'hudInfo',     label: 'Infoboxen',     desc: 'Status-Boxen (Sprechreichweite, Zone …).',            hidden: () => hiddenEls.has('hudInfo'),    toggle: () => toggleHidden('hudInfo') },
   { id: 'growTimer',   label: 'Grow-Timer',    desc: 'Fortschritt deines Dino-Wachstums.',                  hidden: () => hiddenEls.has('growTimer'),  toggle: () => toggleHidden('growTimer') },
   { id: 'goldenHud',   label: 'Goldene Zone',  desc: 'Anzeige der aktiven Goldenen Zone.',                   hidden: () => hiddenEls.has('goldenHud'),  toggle: () => toggleHidden('goldenHud') },
@@ -7988,7 +7975,7 @@ function removeHideToggle(elm) { const b = elm.querySelector('.bf-hide-toggle');
 let windowShrink = localStorage.getItem('bf-window-shrink') === '1';
 let shrinkTimer = null;
 let lastSentH = -1;   // zuletzt gesendete Höhe (0 = Vollbild) — vermeidet redundante Resizes
-const IDLE_HUD_IDS = ['hud', 'hudHP', 'hudGrow', 'hudHunger', 'hudStamina', 'hudThirst', 'minimapWrap', 'hudInfo', 'growTimer', 'eventPanel', 'serverBanner', 'toasts', 'voiceWarn', 'updateHint', 'calibPrompt', 'parkWarn', 'goldenHud'];
+const IDLE_HUD_IDS = ['hud', 'hudHeart', 'minimapWrap', 'hudInfo', 'growTimer', 'eventPanel', 'serverBanner', 'toasts', 'voiceWarn', 'updateHint', 'calibPrompt', 'parkWarn', 'goldenHud'];
 function computeIdleHudBottom() {
   let bottom = 0;
   for (const id of IDLE_HUD_IDS) {

@@ -26,11 +26,10 @@
   <!-- Logo oben links (transparentes PNG), nur wenn Dock offen -->
   <img id="logoFx" src="assets/logo.png" alt="Ferrosaur">
 
-  <!-- Part 3b: Lebensanzeige — 5 eigenständige Waben (HP/Grow/Essen/Ausdauer/Durst), jede für
-       sich permanent, verschiebbar + skalierbar + ausblendbar (siehe MOVABLE/HIDEABLE). Default-
-       Position bildet das frühere fusionierte Dreieck nach, ist aber keine feste Einheit mehr. -->
-  <div id="hudHP" title="HP">
-    <svg viewBox="43.4 81 83.6 96" aria-hidden="true">
+  <!-- Part 3b: Lebensanzeige — Wabenfeld, füllt/leert sich nach Vital-Wert. Permanent, verschiebbar + skalierbar.
+       6 Waben wie das Standard-HUD des Spiels: HP/Rate/Grow oben, Ausdauer/Essen/Durst unten. -->
+  <div id="hudHeart" title="HP · Grow · Ausdauer · Essen · Durst">
+    <svg viewBox="0 83 250 242" aria-hidden="true">
       <defs>
         <linearGradient id="ghGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
@@ -38,68 +37,24 @@
           <stop id="ghF1" offset="1" stop-color="#ef4444"/>
           <stop id="ghF2" offset="1" stop-color="#ef4444"/>
         </linearGradient>
-      </defs>
-      <polygon points="85.2,83 125,106 125,152 85.2,175 45.4,152 45.4,106" fill="rgba(8,5,18,0.55)"/>
-      <polygon points="85.2,83 125,106 125,152 85.2,175 45.4,152 45.4,106" fill="url(#ghGrad)"/>
-      <polygon points="85.2,83 125,106 125,152 85.2,175 45.4,152 45.4,106" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
-      <text id="heartVal" x="85.2" y="132" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">—</text>
-      <text x="85.2" y="150" text-anchor="middle" font-size="8.5" font-weight="700" fill="#f3d6d2" letter-spacing="1.5">HP</text>
-    </svg>
-  </div>
-  <div id="hudGrow" title="Grow">
-    <svg viewBox="123 81 83.6 96" aria-hidden="true">
-      <defs>
         <linearGradient id="ggGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
           <stop id="ggE1" offset="1" stop-color="rgba(255,255,255,0.10)"/>
           <stop id="ggF1" offset="1" stop-color="#8fae54"/>
           <stop id="ggF2" offset="1" stop-color="#8fae54"/>
         </linearGradient>
-      </defs>
-      <polygon points="164.8,83 204.6,106 204.6,152 164.8,175 125,152 125,106" fill="rgba(8,5,18,0.55)"/>
-      <polygon points="164.8,83 204.6,106 204.6,152 164.8,175 125,152 125,106" fill="url(#ggGrad)"/>
-      <polygon points="164.8,83 204.6,106 204.6,152 164.8,175 125,152 125,106" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
-      <text id="growVal" x="164.8" y="132" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">—</text>
-      <text x="164.8" y="150" text-anchor="middle" font-size="8" font-weight="700" fill="#e9e0c4" letter-spacing="1">GROW</text>
-    </svg>
-  </div>
-  <div id="hudHunger" title="Essen">
-    <svg viewBox="83.2 150 83.6 96" aria-hidden="true">
-      <defs>
-        <linearGradient id="gnGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
-          <stop id="gnE1" offset="1" stop-color="rgba(255,255,255,0.10)"/>
-          <stop id="gnF1" offset="1" stop-color="#f97316"/>
-          <stop id="gnF2" offset="1" stop-color="#f97316"/>
-        </linearGradient>
-      </defs>
-      <polygon points="125,152 164.8,175 164.8,221 125,244 85.2,221 85.2,175" fill="rgba(8,5,18,0.55)"/>
-      <polygon points="125,152 164.8,175 164.8,221 125,244 85.2,221 85.2,175" fill="url(#gnGrad)"/>
-      <polygon points="125,152 164.8,175 164.8,221 125,244 85.2,221 85.2,175" fill="none" stroke="#5eead4" stroke-width="2.2"/>
-      <text id="hungerVal" x="125" y="201" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
-      <text x="125" y="221" text-anchor="middle" font-size="13">🍖</text>
-    </svg>
-  </div>
-  <div id="hudStamina" title="Ausdauer">
-    <svg viewBox="43.4 219 83.6 96" aria-hidden="true">
-      <defs>
         <linearGradient id="gsGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
           <stop id="gsE1" offset="1" stop-color="rgba(255,255,255,0.10)"/>
           <stop id="gsF1" offset="1" stop-color="#eab308"/>
           <stop id="gsF2" offset="1" stop-color="#eab308"/>
         </linearGradient>
-      </defs>
-      <polygon points="85.2,221 125,244 125,290 85.2,313 45.4,290 45.4,244" fill="rgba(8,5,18,0.55)"/>
-      <polygon points="85.2,221 125,244 125,290 85.2,313 45.4,290 45.4,244" fill="url(#gsGrad)"/>
-      <polygon points="85.2,221 125,244 125,290 85.2,313 45.4,290 45.4,244" fill="none" stroke="#5eead4" stroke-width="2.2"/>
-      <text id="staminaVal" x="85.2" y="270" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
-      <text x="85.2" y="290" text-anchor="middle" font-size="13">👣</text>
-    </svg>
-  </div>
-  <div id="hudThirst" title="Durst">
-    <svg viewBox="123 219 83.6 96" aria-hidden="true">
-      <defs>
+        <linearGradient id="gnGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
+          <stop id="gnE1" offset="1" stop-color="rgba(255,255,255,0.10)"/>
+          <stop id="gnF1" offset="1" stop-color="#f97316"/>
+          <stop id="gnF2" offset="1" stop-color="#f97316"/>
+        </linearGradient>
         <linearGradient id="gdGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="rgba(255,255,255,0.10)"/>
           <stop id="gdE1" offset="1" stop-color="rgba(255,255,255,0.10)"/>
@@ -107,6 +62,35 @@
           <stop id="gdF2" offset="1" stop-color="#3b82f6"/>
         </linearGradient>
       </defs>
+      <!-- HP (jetzt auf gleicher Ebene wie Grow, ehemals Rate-Position; Rate komplett entfernt) -->
+      <polygon points="85.2,83 125,106 125,152 85.2,175 45.4,152 45.4,106" fill="rgba(8,5,18,0.55)"/>
+      <polygon points="85.2,83 125,106 125,152 85.2,175 45.4,152 45.4,106" fill="url(#ghGrad)"/>
+      <polygon points="85.2,83 125,106 125,152 85.2,175 45.4,152 45.4,106" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
+      <text id="heartVal" x="85.2" y="132" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">—</text>
+      <text x="85.2" y="150" text-anchor="middle" font-size="8.5" font-weight="700" fill="#f3d6d2" letter-spacing="1.5">HP</text>
+      <!-- GROW (mitte rechts) -->
+      <polygon points="164.8,83 204.6,106 204.6,152 164.8,175 125,152 125,106" fill="rgba(8,5,18,0.55)"/>
+      <polygon points="164.8,83 204.6,106 204.6,152 164.8,175 125,152 125,106" fill="url(#ggGrad)"/>
+      <polygon points="164.8,83 204.6,106 204.6,152 164.8,175 125,152 125,106" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
+      <text id="growVal" x="164.8" y="132" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">—</text>
+      <text x="164.8" y="150" text-anchor="middle" font-size="8" font-weight="700" fill="#e9e0c4" letter-spacing="1">GROW</text>
+      <!-- Zweite Waben-Gruppe, direkt an Rate/Grow anschliessend (echtes Hex-Grid, keine
+           Luecke) - als Dreieck wie im sauberen Referenzbild: Essen oben (teilt sich die
+           Kante mit Rate+Grow), Ausdauer/Durst darunter links/rechts. Cyan-Umriss + Icon
+           statt Text-Label. Fuellung bleibt (echter Live-Wert aus RCON). -->
+      <!-- ESSEN/HUNGER (oben, direkt unter Rate+Grow) -->
+      <polygon points="125,152 164.8,175 164.8,221 125,244 85.2,221 85.2,175" fill="rgba(8,5,18,0.55)"/>
+      <polygon points="125,152 164.8,175 164.8,221 125,244 85.2,221 85.2,175" fill="url(#gnGrad)"/>
+      <polygon points="125,152 164.8,175 164.8,221 125,244 85.2,221 85.2,175" fill="none" stroke="#5eead4" stroke-width="2.2"/>
+      <text id="hungerVal" x="125" y="201" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
+      <text x="125" y="221" text-anchor="middle" font-size="13">🍖</text>
+      <!-- AUSDAUER (unten links) -->
+      <polygon points="85.2,221 125,244 125,290 85.2,313 45.4,290 45.4,244" fill="rgba(8,5,18,0.55)"/>
+      <polygon points="85.2,221 125,244 125,290 85.2,313 45.4,290 45.4,244" fill="url(#gsGrad)"/>
+      <polygon points="85.2,221 125,244 125,290 85.2,313 45.4,290 45.4,244" fill="none" stroke="#5eead4" stroke-width="2.2"/>
+      <text id="staminaVal" x="85.2" y="270" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">—</text>
+      <text x="85.2" y="290" text-anchor="middle" font-size="13">👣</text>
+      <!-- DURST (unten rechts) -->
       <polygon points="164.8,221 204.6,244 204.6,290 164.8,313 125,290 125,244" fill="rgba(8,5,18,0.55)"/>
       <polygon points="164.8,221 204.6,244 204.6,290 164.8,313 125,290 125,244" fill="url(#gdGrad)"/>
       <polygon points="164.8,221 204.6,244 204.6,290 164.8,313 125,290 125,244" fill="none" stroke="#5eead4" stroke-width="2.2"/>
