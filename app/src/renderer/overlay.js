@@ -18,6 +18,7 @@ const svFmtTod = fmtTod;
 // Companion dieselben Schemata anbietet. Hier bleibt nur, was overlay-eigen
 // ist: der Picker (nutzt showToast/el) und die Minimap-Invalidierung.
 const BF_THEMES = THEMES;
+let myZombieOk = false;   // 🧟 Zombie-Look freigeschaltet (Team oder ZOMBIE_LOOK=all) — aus /token
 let mySkinFree = false;   // 🎨 Skin-Creator gratis (ab Knochen ODER Beta-Tester-Rolle) — aus /token
 const bfTheme = makeTheme({
   storageKey: 'bf-theme',
@@ -6040,7 +6041,7 @@ async function renderSkinEditor() {
   setSkinBaseline();
   skinPays = !mySkinFree;                    // Free (FERROSAUR) = gratis Live-Vorschau + „Bestätigen" zahlt; ab Knochen/Beta-Tester live & gratis
   skinConfirmed = false; skinPreviewed = false;   // neue Editier-Sitzung: nichts bestätigt/vorschau
-  const obsidian = myAboIdx() >= 3;
+  const obsidian = myAboIdx() >= 3 || myZombieOk;
   // Quick-Fix: GENDER_SWAP_DISABLED schlägt Rang UND Event → für niemanden anklickbar.
   const canGender = !GENDER_SWAP_DISABLED && (freeGenderSwap || myAboIdx() >= 2); // Event aktiv → für alle frei, sonst ab Bernstein
   const genderTip = GENDER_SWAP_DISABLED
@@ -7442,6 +7443,7 @@ async function loadRoleUI() {
     setTier(data.tier);
     setAboTier((data.team || data.admin) ? 'Obsidian' : data.aboTier);
     mySkinFree = !!data.skinFree;
+    myZombieOk = !!data.zombieLook;
     setStaff(data.staff);
     applyModerationGate();
     if (isStaff) loadDutyState();
@@ -7480,6 +7482,7 @@ async function connectWithSession(session) {
     // Abo bzw. falls die Discord-Rollen-Auflösung serverseitig mal nicht greift (sonst Schlösser für Teamler).
     setAboTier((data.team || data.admin) ? 'Obsidian' : data.aboTier);
     mySkinFree = !!data.skinFree;   // 🎨 Skin-Creator gratis (ab Knochen ODER Beta-Tester)
+    myZombieOk = !!data.zombieLook;
     serverVoice = !!data.serverVoice; // Backend steuert Proximity-Subscriptions → autoSubscribe:false
     setStaff(data.staff);
     pollHud();

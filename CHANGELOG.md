@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.50 — Zombie-Look im Skin-Menü
+
+### ✨ Neu
+
+- Der Zombie-Look-Regler im Skin-Editor ist für das Team freigeschaltet und
+  wirkt auf deinen Dino im Spiel (Verrottungs-Maske, 0–100 %). Der Server
+  kann ihn über eine Einstellung für alle Spieler öffnen.
+
 ## v1.11.49 — Zonen komplett bearbeiten
 
 ### ✨ Neu
