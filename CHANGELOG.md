@@ -7,6 +7,20 @@
 
 ## [Unreleased]
 
+## v1.11.44 — Server-Name und Token-Markt auf Discord
+
+### ✨ Neu
+
+- Im Server-Panel (Übersicht) trägst du jetzt den Server-Namen ein. Er
+  erscheint im Discord-Status und im Token-Markt-Angebot.
+- Token-Markt auf Discord: Spieler verkaufen mit dem Befehl
+  `/token-verkaufen` Token an andere Spieler. Das Angebot erscheint als
+  Nachricht mit „Kaufen"-Button im Markt-Kanal und gleichzeitig im
+  Token-Markt des Overlays. Kauft oder zieht jemand im Overlay zurück,
+  aktualisiert sich die Discord-Nachricht automatisch, und umgekehrt.
+- Mit `/tokens` sehen Spieler auf Discord ihre Token und Punkte.
+- Alles wird im Server-Panel unter „Übersicht → Discord-Bot" eingetragen.
+
 ## v1.11.43 — Discord Status-Bot
 
 ### ✨ Neu

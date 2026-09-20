@@ -2830,17 +2830,28 @@ async function srvRenderBotBox() {
     const i = el('sbInfo'); if (!i) return;
     const parts = [cfg.hasToken ? '🔑 Token gespeichert' : '🔑 kein Token'];
     if (cfg.lastOkAt) parts.push('✅ zuletzt gesendet ' + new Date(cfg.lastOkAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
-    i.innerHTML = escapeHtml(parts.join(' · ')) + (cfg.lastError ? `<br><span style="color:#f87171">⚠️ ${escapeHtml(cfg.lastError)}</span>` : '');
+    i.innerHTML = escapeHtml(parts.join(' · ')) + (cfg.lastError ? `<br><span style="color:#f87171">⚠️ ${escapeHtml(cfg.lastError)}</span>` : '') + (cfg.marketError ? `<br><span style="color:#f87171">⚠️ Token-Markt: ${escapeHtml(cfg.marketError)}</span>` : '');
     const t = el('sbToken'); if (t) t.placeholder = cfg.hasToken ? '•••••• gespeichert (leer lassen = unverändert)' : 'Bot-Token einfügen';
   };
   if (el('sbForm')) { info(); return; }
-  box.innerHTML = `<div class="dt-sec" style="margin-top:14px">🤖 Discord Status-Bot</div>
+  box.innerHTML = `<div class="dt-sec" style="margin-top:14px">🤖 Discord-Bot</div>
     <div class="dt-form" id="sbForm">
-      <div class="dt-muted" style="margin-bottom:8px">Der Bot hält eine Nachricht mit dem Server-Status (online, Spieler) in einem Discord-Kanal aktuell. Bot im Discord Developer Portal anlegen, auf deinen Server einladen (Rechte: Nachrichten senden, Links einbetten) und die Kanal-ID kopieren.</div>
+      <div class="dt-muted" style="margin-bottom:8px">Bot im Discord Developer Portal anlegen, auf deinen Server einladen (Rechte: Nachrichten senden, Links einbetten) und Token + Kanal-IDs hier eintragen.</div>
+      <div class="set-label">Server-Name</div>
+      <input id="sbName" maxlength="60" class="tm-input" placeholder="z.B. Ferrosaur — The Isle RP" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+      <div class="set-label">Bot-Token</div>
       <input id="sbToken" type="password" autocomplete="off" class="tm-input" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+      <div class="set-label">📊 Status-Kanal (hält eine Nachricht mit Server-Status aktuell)</div>
       <input id="sbChannel" class="tm-input" placeholder="Kanal-ID" style="width:100%;box-sizing:border-box;margin-bottom:6px">
       <div style="display:flex;gap:8px;align-items:center;font-size:13px;margin-bottom:6px">Aktualisieren alle <input id="sbInterval" type="number" min="1" max="60" class="tm-input" style="width:70px"> Min</div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none"><input id="sbEnabled" type="checkbox" style="width:auto;cursor:pointer"> Bot aktiv</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none"><input id="sbEnabled" type="checkbox" style="width:auto;cursor:pointer"> Status-Nachricht aktiv</label>
+      <div class="set-label" style="margin-top:12px">🎁 Token-Markt auf Discord (Spieler verkaufen Token per /token-verkaufen, erscheint auch im Overlay)</div>
+      <input id="sbAppId" class="tm-input" placeholder="Application-ID (Developer Portal → General Information)" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+      <input id="sbPubKey" class="tm-input" placeholder="Public Key (General Information)" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+      <input id="sbMarketCh" class="tm-input" placeholder="Markt-Kanal-ID" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+      <div style="display:flex;gap:6px;margin-bottom:6px"><input id="sbUrl" class="tm-input" readonly style="flex:1;min-width:0"><button id="sbUrlCopy" class="secondary" style="flex:none;width:auto;padding:6px 10px">📋</button></div>
+      <div class="dt-muted" style="margin-bottom:6px">↑ Diese URL im Developer Portal bei „Interactions Endpoint URL" eintragen (erst Application-ID + Public Key speichern).</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none"><input id="sbMarketEnabled" type="checkbox" style="width:auto;cursor:pointer"> Token-Markt-Bot aktiv</label>
       <div style="display:flex;gap:6px;margin-top:8px">
         <button id="sbSave" style="flex:1">💾 Speichern</button>
         <button id="sbTest" class="secondary" style="flex:1">📨 Test senden</button>
@@ -2851,13 +2862,21 @@ async function srvRenderBotBox() {
   el('sbChannel').value = cfg.channelId || '';
   el('sbInterval').value = cfg.intervalMin || 5;
   el('sbEnabled').checked = !!cfg.enabled;
+  el('sbName').value = cfg.serverName || '';
+  el('sbAppId').value = cfg.applicationId || '';
+  el('sbPubKey').value = cfg.publicKey || '';
+  el('sbMarketCh').value = cfg.marketChannelId || '';
+  el('sbMarketEnabled').checked = !!cfg.marketEnabled;
+  el('sbUrl').value = `${config.tokenBase}/discord/interactions`;
+  el('sbUrlCopy').onclick = async () => { let ok = false; try { ok = await window.bf.copyText(el('sbUrl').value); } catch {} if (!ok) { try { await navigator.clipboard.writeText(el('sbUrl').value); ok = true; } catch {} } showToast(ok ? '📋 URL kopiert' : 'Kopieren fehlgeschlagen', ok ? 'success' : 'error'); };
   info();
   const apply = (d) => { cfg = d; el('sbToken').value = ''; info(); };
   el('sbSave').onclick = async () => {
     try {
-      const d = await svApi('POST', '/admin/status-bot', { token: el('sbToken').value.trim(), channelId: el('sbChannel').value.trim(), intervalMin: parseInt(el('sbInterval').value, 10) || 5, enabled: el('sbEnabled').checked });
-      apply(d); el('sbEnabled').checked = !!d.enabled;
-      showToast(d.lastError ? '⚠️ Gespeichert, aber: ' + d.lastError : (d.enabled ? '🤖 Status-Bot aktiv' : '💾 Gespeichert'), d.lastError ? 'error' : 'success');
+      const d = await svApi('POST', '/admin/status-bot', { token: el('sbToken').value.trim(), channelId: el('sbChannel').value.trim(), intervalMin: parseInt(el('sbInterval').value, 10) || 5, enabled: el('sbEnabled').checked, serverName: el('sbName').value.trim(), applicationId: el('sbAppId').value.trim(), publicKey: el('sbPubKey').value.trim(), marketChannelId: el('sbMarketCh').value.trim(), marketEnabled: el('sbMarketEnabled').checked });
+      apply(d); el('sbEnabled').checked = !!d.enabled; el('sbMarketEnabled').checked = !!d.marketEnabled;
+      const warn = d.lastError || d.marketError;
+      showToast(warn ? '⚠️ Gespeichert, aber: ' + warn : (d.enabled || d.marketEnabled ? '🤖 Bot aktiv' : '💾 Gespeichert'), warn ? 'error' : 'success');
     } catch (e) { showToast(e.message, 'error'); }
   };
   el('sbTest').onclick = async () => {
@@ -2865,7 +2884,7 @@ async function srvRenderBotBox() {
     catch (e) { showToast(e.message, 'error'); srvRenderBotBox(); }
   };
   el('sbClear').onclick = () => svArmConfirm(el('sbClear'), 'Sicher? Token löschen', async () => {
-    try { const d = await svApi('POST', '/admin/status-bot', { clearToken: true, channelId: el('sbChannel').value.trim(), intervalMin: parseInt(el('sbInterval').value, 10) || 5, enabled: false }); apply(d); el('sbEnabled').checked = false; showToast('🗑️ Token gelöscht, Bot aus', 'success'); }
+    try { const d = await svApi('POST', '/admin/status-bot', { clearToken: true, channelId: el('sbChannel').value.trim(), intervalMin: parseInt(el('sbInterval').value, 10) || 5, enabled: false }); apply(d); el('sbEnabled').checked = false; el('sbMarketEnabled').checked = false; showToast('🗑️ Token gelöscht, Bot aus', 'success'); }
     catch (e) { showToast(e.message, 'error'); }
   });
 }
