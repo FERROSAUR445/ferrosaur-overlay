@@ -5374,6 +5374,7 @@ const LB_TOKEN_META = {
   hunger: ['🍖', 'Hunger'], thirst: ['💧', 'Durst'], protein: ['🥩', 'Protein'],
   carbs: ['🌿', 'Carbs'], lipid: ['🥑', 'Lipid'], heal: ['❤️', 'Heal'],
   grow_boost: ['📈', 'Grow-Boost'], grow_stop: ['⏹️', 'Grow-Stop'], insta_grow: ['⚡', 'Insta-Grow'],
+  blank: ['💨', 'Niete'],
 };
 function lbTok(id) { return LB_TOKEN_META[id] || ['🎁', id]; }
 const LB_SPIN = Object.values(LB_TOKEN_META).map((x) => x[0]); // Emoji-Pool für die drehenden Walzen
@@ -5478,6 +5479,14 @@ async function openLootbox() {
   }
   clearInterval(spin);
 
+  if (d.outcome === 'blank') {
+    if (res) res.innerHTML = '<div class="lb-result"><div style="font-size:15px">💨 <b>Niete</b> — diesmal nichts gezogen.</div></div>';
+    showToast('💨 Niete — diesmal nichts gezogen', '');
+    if (typeof d.points === 'number') setPointsHud(d.points);
+    lbOpening = false;
+    updateLbAvail(d.points, d.freeBoxes);
+    return;
+  }
   const [e, l] = lbTok(d.reward);
   if (res) res.innerHTML = `<div class="lb-result${jackpot ? ' jackpot' : ''}"><div style="font-size:15px">${jackpot ? '🎉 JACKPOT! ' : ''}${e} <b>${d.count}× ${l}</b> gewonnen!</div></div>`;
   showToast(`${e} ${d.count}× ${l} gewonnen!`, 'success');
@@ -6492,7 +6501,7 @@ function renderTokenTrade(body) {
 async function renderMyOffers() {
   el('mkRoot').innerHTML = '<h2 style="margin:0 0 12px">📋 Meine Angebote</h2><div id="myBody"><div style="' + tmMuted + '">Lade…</div></div>';
   try {
-    const [tm] = await Promise.all([
+    const [tm] = await Promise.all([
       fetch(`${config.tokenBase}/tokenmarket`, { headers: { Authorization: `Bearer ${sessionToken}` } }).then((r) => r.json()),
     ]);
     const lbl = (id, data) => { const d = (data.tokenDefs || []).find((x) => x.id === id) || { emoji: '🎁', label: id }; return `${d.emoji} ${d.label}`; };

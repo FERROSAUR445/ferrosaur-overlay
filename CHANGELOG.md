@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.42 — Nieten in der Lootbox
+
+### ✨ Neu
+
+- Die Lootbox kann jetzt auch Nieten ziehen: Landet die mittlere Walze auf
+  💨, gibt es diesmal nichts. Drei Nieten sind kein Jackpot. Die Chance
+  steht bei den Drop-Chancen, und Admins stellen sie im Lootbox-Editor ein
+  (0 schaltet Nieten ab).
+
 ## v1.11.41 — Dino-Markt entfernt
 
 ### 🔧 Sonstiges
