@@ -531,6 +531,12 @@ function updateHeart(d) {
   const thirst = online && typeof d.thirst === 'number' ? Math.max(0, Math.min(1, d.thirst)) : 0;
   setHex(thirst, online ? '#3b82f6' : gray, 'gdE1', 'gdF1', 'gdF2');
   { const v = document.getElementById('thirstVal'); if (v) v.textContent = online ? Math.round(thirst * 100) + '%' : '—'; }
+  // NÄHRSTOFFE α Kohlenhydrate · β Protein · γ Fett (Live-Wert aus dem Server-Mod, Anteil 0..1)
+  for (const [key, valId, pre, col] of [['carbs', 'carbVal', 'ga', '#a3e635'], ['protein', 'proteinVal', 'gb', '#f472b6'], ['lipid', 'lipidVal', 'gc', '#fbbf24']]) {
+    const f = online && typeof d[key] === 'number' ? Math.max(0, Math.min(1, d[key])) : 0;
+    setHex(f, online ? col : gray, pre + 'E1', pre + 'F1', pre + 'F2');
+    const v = document.getElementById(valId); if (v) v.textContent = online ? Math.round(f * 100) + '%' : '—';
+  }
 }
 // ── Kompass (verschiebbarer Balken oben) ────────────────────────────────────
 // Himmelsrichtungen (N rot) + Wegpunkt 📍 + Golden-Zone ⭐ + Gruppenmitglieder (Kartenfarben)
@@ -3599,7 +3605,8 @@ async function toggleDuty() {
     const res = await fetch(`${config.tokenBase}/me/duty`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}` } });
     const d = await res.json(); if (!res.ok) throw new Error(apiErr(d));
     updateDutyBtn(!!d.on);
-    showToast(d.on ? '🩷 Dienst-Modus AN — Vitals eingefroren, Admin-Skin aktiv' : '✅ Dienst-Modus aus — Skin zurückgesetzt', 'success');
+    const skinNote = d.skin === 'failed' ? ' (Skin-Wechsel nicht möglich — bist du im Spiel?)' : d.skin === 'team' ? ' — roter Team-Skin aktiv' : d.skin === 'restored' ? ' — dein Skin ist zurück' : '';
+    showToast(d.on ? `🩷 Dienst-Modus AN — Vitals eingefroren${skinNote}` : `✅ Dienst-Modus aus${skinNote}`, d.skin === 'failed' ? 'error' : 'success');
   } catch (e) { showToast(e.message || 'Fehler', 'error'); }
   finally { if (b) b.disabled = false; }
 }
