@@ -5067,7 +5067,7 @@ async function startQuest(btn) {
     const d = await r.json();
     if (!r.ok) { showToast(apiErr(d, 'Start fehlgeschlagen'), 'error'); if (btn) { btn.disabled = false; renderQuests(); } return; }
     questState.active = d.active;
-    showToast('🚀 Quest gestartet! Wachse als Quest-Dino auf Prime + 80%.', 'success');
+    showToast(d.notice || '🚀 Quest gestartet! Wachse als Quest-Dino auf Prime + 80%.', 'success');
     renderQuests();
   } catch { showToast('Verbindungsfehler', 'error'); if (btn) btn.disabled = false; }
 }

@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.39 — Quest-Start parkt deinen Dino ein
+
+### 🐛 Fehlerbehoben
+
+- Beim Start einer Quest wird dein aktueller Dino jetzt wirklich in die
+  Garage eingeparkt, so wie es im Quest-Fenster steht. Danach wählst du im
+  Spawn-Menü die Quest-Spezies. Hat dein Dino nicht volle Gesundheit,
+  bekommst du eine Meldung und die Quest startet erst nach dem Heilen.
+
 ## v1.11.38 — Wachstumsbalken in der Garage
 
 ### ✨ Neu
