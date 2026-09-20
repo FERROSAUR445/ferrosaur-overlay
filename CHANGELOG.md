@@ -7,6 +7,17 @@
 
 ## [Unreleased]
 
+## v1.11.35 — Nährstoff-Waben und roter Team-Skin im Dienst
+
+### ✨ Neu
+
+- Die Lebensanzeige zeigt jetzt auch die drei Nährstoff-Waben mit echten
+  Live-Werten: α Kohlenhydrate, β Protein, γ Fett.
+- Beim Wechsel in den Admin-Dienst wird der Dino automatisch rot
+  (Team-Skin). Beim Verlassen des Dienstes bekommst du deinen vorherigen
+  Skin zurück.
+- Der rote Team-Skin ist für normale Spieler gesperrt.
+
 ## v1.11.34 — Skin wird gespeichert und wieder geladen
 
 ### 🐛 Fehlerbehoben
