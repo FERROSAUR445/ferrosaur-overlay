@@ -5728,6 +5728,11 @@ function dinoPreview(card, cls) {
   return `<div class="prevwrap ${cls || ''}">${dinoPreviewSVG(card)}<img class="photo" src="${dinoImgSrc(card.dinoClass)}" alt="" onerror="this.remove()"></div>`;
 }
 
+// Wachstumsbalken (0..1) für Garage-Karten und Detailansicht — gleiche Farbe wie im Dino-Panel.
+function growBarHTML(grow, height) {
+  const g = Number.isFinite(grow) ? Math.max(0, Math.min(1, grow)) : 0;
+  return `<div class="stat-track" style="height:${height || 8}px;margin-top:5px"><div class="stat-fill" style="width:${Math.round(g * 100)}%;background:#84cc16"></div></div>`;
+}
 function dinoCardEl(card, onClick) {
   const d = document.createElement('div'); d.className = 'dino-card';
   // Custom-Name (Garage): als Titel, Spezies+Wachstum als Untertitel. Sonst wie bisher Spezies-Titel.
@@ -5735,7 +5740,7 @@ function dinoCardEl(card, onClick) {
   const sub = card._name
     ? `${escapeHtml(card.dinoClass || '')}${card.isElder ? ' 👑' : ''} · ${fmtGrow(card.grow || 0)}`
     : `${card.gender || ''} · ${fmtGrow(card.grow || 0)}`;
-  d.innerHTML = dinoPreview(card) + `<div class="body"><div class="nm">${title}</div><div class="mt">${sub}</div></div>` + paletteHTML(card.colors);
+  d.innerHTML = dinoPreview(card) + `<div class="body"><div class="nm">${title}</div><div class="mt">${sub}</div>${growBarHTML(card.grow)}</div>` + paletteHTML(card.colors);
   d.onclick = onClick; return d;
 }
 // Garage/Markt-Dino-Info: gespeicherte Dino-Karten → Vitals als Prozent (kein Cur/Max-Kontext).
@@ -5846,7 +5851,9 @@ function showDinoDetail(card, ctx) {
       <div class="prevwrap ddbig">${dinoPreviewSVG(card)}<img class="photo" src="${dinoImgSrc(card.dinoClass)}" alt="" onerror="this.remove()"></div>
       <div style="flex:1;min-width:0">
         <div class="dd-nm" style="overflow:hidden;text-overflow:ellipsis">${escapeHtml(card.dinoClass || '?')}</div>
-        <div style="font-size:12px;color:var(--muted);margin:3px 0 9px">${fmtGrow(card.grow || 0)} Wachstum</div>
+        <div style="font-size:12px;color:var(--muted);margin:3px 0 4px;display:flex;justify-content:space-between"><span>🌱 Wachstum</span><span>${fmtGrow(card.grow || 0)}</span></div>
+        ${growBarHTML(card.grow, 11)}
+        <div style="height:9px"></div>
         <div style="display:flex;gap:5px;flex-wrap:wrap">${badges}</div>
         ${paletteHTML(card.colors)}
       </div>

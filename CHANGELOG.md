@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.38 — Wachstumsbalken in der Garage
+
+### ✨ Neu
+
+- Garage-Karten und die Detailansicht zeigen jetzt einen Wachstumsbalken
+  mit Prozentwert.
+
 ## v1.11.37 — Prime-Status aus dem Spiel
 
 ### 🐛 Fehlerbehoben
