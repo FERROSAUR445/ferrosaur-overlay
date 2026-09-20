@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.40 — Quest direkt im Spiel starten
+
+### ✨ Neu
+
+- Eine gewürfelte Quest startet jetzt automatisch, sobald du im Spiel als
+  Quest-Spezies spawnst (Juvi bis 30 % Wachstum). Du musst dafür nichts
+  mehr im Overlay anklicken, das Overlay meldet den Start per Hinweis.
+
 ## v1.11.39 — Quest-Start parkt deinen Dino ein
 
 ### 🐛 Fehlerbehoben

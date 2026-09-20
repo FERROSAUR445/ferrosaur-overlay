@@ -4978,7 +4978,7 @@ function questStageHtml() {
     if (a.status === 'rolled') {
       return `<div style="font-size:12px;color:var(--accent-2);font-weight:700;margin-bottom:6px">DEINE QUEST</div>` + lines
         + questProgressHtml() + reward
-        + `<div style="font-size:11px;color:var(--muted);margin-top:10px">Beim Start wird dein aktueller Dino <b>eingeparkt</b> und du startest als <b>${escapeHtml(a.dinoName || a.dino)}</b>-Juvi (25%). Ziel: <b>Prime + ${target}%</b>.</div>`
+        + `<div style="font-size:11px;color:var(--muted);margin-top:10px">Beim Start wird dein aktueller Dino <b>eingeparkt</b> und du startest als <b>${escapeHtml(a.dinoName || a.dino)}</b>-Juvi (25%). Ziel: <b>Prime + ${target}%</b>.<br>Du kannst auch direkt im Spiel starten: spawne einfach als <b>${escapeHtml(a.dinoName || a.dino)}</b> — die Quest startet dann automatisch.</div>`
         + `<div style="display:flex;gap:8px;margin-top:12px"><button id="qStart" style="flex:1">🚀 Quest starten</button><button id="qAbandon" class="secondary" style="flex:none">Aufgeben</button></div>`;
     }
     if (a.status === 'failed') {
