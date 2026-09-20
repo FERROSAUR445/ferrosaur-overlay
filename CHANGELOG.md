@@ -7,6 +7,19 @@
 
 ## [Unreleased]
 
+## v1.11.34 — Skin wird gespeichert und wieder geladen
+
+### 🐛 Fehlerbehoben
+
+- Der Skin-Editor zeigte beim erneuten Öffnen immer wieder graue
+  Standardfarben statt deines zuletzt bestätigten Skins. Dein Skin
+  wird jetzt gespeichert und beim Öffnen wieder angezeigt.
+- Eigene Vorlagen ließen sich zwar speichern, aber nicht anwenden oder
+  löschen. Beides funktioniert jetzt.
+- Kurze Server-Neustarts lösten die Fehlermeldung „Unexpected token '<'
+  … is not valid JSON" aus. Das Overlay wiederholt die Anfrage jetzt
+  automatisch und zeigt eine verständliche Meldung.
+
 ## v1.11.33 — Prime-Fortschritt in der Garage sichtbar
 
 ### 🐛 Fehlerbehoben

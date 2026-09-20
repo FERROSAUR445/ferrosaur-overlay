@@ -6115,6 +6115,21 @@ async function changeGender(gender, panel) {
   } catch (e) { setSkinLive('⚠️ ' + e.message, '#ef4444'); showToast(e.message, 'error'); }
 }
 function setSkinLive(txt, color) { const h = el('skLive'); if (h) { h.textContent = txt; h.style.color = color || '#22c55e'; } }
+// Skin-Requests: bei 502/503/504 (Backend startet gerade neu) bis zu 3x wiederholen und nie an HTML-Fehlerseiten
+// ("<html>… is not valid JSON") scheitern — stattdessen verständliche Meldung.
+async function skinFetch(path, opts) {
+  const url = `${config.tokenBase}${path}`;
+  let res;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    res = await fetch(url, opts);
+    if (![502, 503, 504].includes(res.status)) break;
+    await new Promise((r) => setTimeout(r, 1200));
+  }
+  const text = await res.text();
+  let data; try { data = JSON.parse(text); } catch { data = null; }
+  if (!data) throw new Error(res.status >= 500 || /^\s*</.test(text) ? 'Server startet gerade neu — bitte gleich nochmal versuchen.' : 'Unerwartete Server-Antwort.');
+  return { res, data };
+}
 // Spiegelt skinState → UI (nach Import/Vorlage)
 function syncSkinUI() {
   for (const [k] of SKIN_GROUPS) { const inp = document.querySelector(`#skinEditor [data-col="${k}"]`); if (inp) inp.value = linToHex(skinState.colors[k]); }
@@ -6140,8 +6155,8 @@ function scheduleSkinPreview() {
 async function previewSkin() {
   try {
     const body = { skinVariation: skinState.skinVariation, patternIndex: skinState.patternIndex, themeIndex: skinState.themeIndex, ...skinState.colors, preview: true };
-    const res = await fetch(`${config.tokenBase}/skin`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const d = await res.json(); if (!res.ok) throw new Error(apiErr(d));
+    const { res, data: d } = await skinFetch('/skin', { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(apiErr(d));
     skinPreviewed = true; skinConfirmed = false;
     setSkinLive('🟢 Live-Vorschau — noch nicht bestätigt', '#22c55e');
   } catch (err) { setSkinLive('⚠️ ' + err.message, '#ef4444'); showToast(err.message, 'error'); }
@@ -6150,10 +6165,8 @@ async function commitSkin() {
   setSkinLive('… wird übernommen', '#f59e0b');
   try {
     const body = { skinVariation: skinState.skinVariation, patternIndex: skinState.patternIndex, themeIndex: skinState.themeIndex, gender: skinState.gender, ...skinState.colors };
-    const send = () => fetch(`${config.tokenBase}/skin`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    let res = await send();
-    if (res.status === 502) { await new Promise((r) => setTimeout(r, 1200)); res = await send(); }
-    const d = await res.json(); if (!res.ok) throw new Error(apiErr(d));
+    const { res, data: d } = await skinFetch('/skin', { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(apiErr(d));
     if (typeof d.points === 'number') setPointsHud(d.points);
     skinConfirmed = true; skinPreviewed = false;
     setSkinBaseline(); updateApplyCost();
@@ -6206,10 +6219,8 @@ async function applySkin(auto) {
   setSkinLive('… wird übernommen', '#f59e0b');
   try {
     const body = { skinVariation: skinState.skinVariation, patternIndex: skinState.patternIndex, themeIndex: skinState.themeIndex, gender: skinState.gender, ...skinState.colors };
-    const send = () => fetch(`${config.tokenBase}/skin`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    let res = await send();
-    if (res.status === 502) { await new Promise((r) => setTimeout(r, 1200)); res = await send(); } // ein Retry bei Server-Hänger
-    const d = await res.json(); if (!res.ok) throw new Error(apiErr(d));
+    const { res, data: d } = await skinFetch('/skin', { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(apiErr(d));
     if (typeof d.points === 'number') setPointsHud(d.points);
     setSkinBaseline(); updateApplyCost();   // angewendeter Stand = neue Baseline (Free-Kosten ab hier neu)
     setSkinLive(d.charged ? `🟢 Übernommen (−${d.charged} Pkt)` : '🟢 Live übernommen', '#22c55e');
@@ -6231,8 +6242,8 @@ async function saveSkinTemplate() {
   if (!name) { showToast('Vorlagen-Name fehlt', 'error'); return; }
   try {
     const body = { name, skinVariation: skinState.skinVariation, patternIndex: skinState.patternIndex, themeIndex: skinState.themeIndex, colors: skinState.colors };
-    const r = await fetch(`${config.tokenBase}/skin/templates`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const d = await r.json(); if (!r.ok) throw new Error(apiErr(d));
+    const { res: r, data: d } = await skinFetch('/skin/templates', { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error(apiErr(d));
     skinTpl = { ...skinTpl, templates: d.templates, used: d.used, limit: d.limit };
     if (typeof d.points === 'number') setPointsHud(d.points);
     el('skTplName').value = '';
@@ -6242,8 +6253,8 @@ async function saveSkinTemplate() {
 }
 async function applySkinTemplate(t) {
   try {
-    const r = await fetch(`${config.tokenBase}/skin/templates/${t.id}/apply`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}` } });
-    const d = await r.json(); if (!r.ok) throw new Error(apiErr(d));
+    const { res: r, data: d } = await skinFetch(`/skin/templates/${encodeURIComponent(t.id)}/apply`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}` } });
+    if (!r.ok) throw new Error(apiErr(d));
     if (typeof d.points === 'number') setPointsHud(d.points);
     // skinState + Baseline auf die (server-seitig angewendete) Vorlage ziehen
     skinState.skinVariation = t.skinVariation || 0;
@@ -6256,9 +6267,10 @@ async function applySkinTemplate(t) {
 }
 async function deleteSkinTemplate(id) {
   try {
-    const r = await fetch(`${config.tokenBase}/skin/templates/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${sessionToken}` } });
-    const d = await r.json(); if (r.ok) { skinTpl = { ...skinTpl, templates: d.templates, used: d.used, limit: d.limit }; renderSkinTemplates(); }
-  } catch {}
+    const { res: r, data: d } = await skinFetch(`/skin/templates/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { Authorization: `Bearer ${sessionToken}` } });
+    if (!r.ok) throw new Error(apiErr(d));
+    skinTpl = { ...skinTpl, templates: d.templates, used: d.used, limit: d.limit }; renderSkinTemplates();
+  } catch (e) { showToast(e.message, 'error'); }
 }
 function renderSkinTemplates() {
   const box = el('skTplList'); if (!box) return;
