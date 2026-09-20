@@ -2828,10 +2828,11 @@ async function srvRenderBotBox() {
   try { cfg = await svApi('GET', '/admin/status-bot'); } catch { return; }
   const info = () => {
     const i = el('sbInfo'); if (!i) return;
-    const parts = [cfg.hasToken ? '🔑 Token gespeichert' : '🔑 kein Token'];
+    const parts = [cfg.hasToken ? '🔑 Status-Token gespeichert' : '🔑 kein Status-Token', cfg.hasMarketToken ? '🔑 Markt-Token gespeichert' : '🔑 kein Markt-Token'];
     if (cfg.lastOkAt) parts.push('✅ zuletzt gesendet ' + new Date(cfg.lastOkAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
     i.innerHTML = escapeHtml(parts.join(' · ')) + (cfg.lastError ? `<br><span style="color:#f87171">⚠️ ${escapeHtml(cfg.lastError)}</span>` : '') + (cfg.marketError ? `<br><span style="color:#f87171">⚠️ Token-Markt: ${escapeHtml(cfg.marketError)}</span>` : '');
-    const t = el('sbToken'); if (t) t.placeholder = cfg.hasToken ? '•••••• gespeichert (leer lassen = unverändert)' : 'Bot-Token einfügen';
+    const t = el('sbToken'); if (t) t.placeholder = cfg.hasToken ? 'Status-Bot-Token: •••••• gespeichert (leer lassen = unverändert)' : 'Status-Bot-Token einfügen';
+    const mt = el('sbMarketToken'); if (mt) mt.placeholder = cfg.hasMarketToken ? 'Markt-Bot-Token: •••••• gespeichert (leer lassen = unverändert)' : 'Markt-Bot-Token einfügen';
   };
   if (el('sbForm')) { info(); return; }
   box.innerHTML = `<div class="dt-sec" style="margin-top:14px">🤖 Discord-Bot</div>
@@ -2846,8 +2847,10 @@ async function srvRenderBotBox() {
       <div style="display:flex;gap:8px;align-items:center;font-size:13px;margin-bottom:6px">Aktualisieren alle <input id="sbInterval" type="number" min="1" max="60" class="tm-input" style="width:70px"> Min</div>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none"><input id="sbEnabled" type="checkbox" style="width:auto;cursor:pointer"> Status-Nachricht aktiv</label>
       <div class="set-label" style="margin-top:12px">🎁 Token-Markt auf Discord (Spieler verkaufen Token per /token-verkaufen, erscheint auch im Overlay)</div>
-      <input id="sbAppId" class="tm-input" placeholder="Application-ID (Developer Portal → General Information)" style="width:100%;box-sizing:border-box;margin-bottom:6px">
-      <input id="sbPubKey" class="tm-input" placeholder="Public Key (General Information)" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+      <div class="dt-muted" style="margin-bottom:6px">Der Token-Markt läuft über einen <b>eigenen, zweiten Bot</b> (eigene Anwendung im Developer Portal) — nicht über den Status-Bot oben.</div>
+      <input id="sbMarketToken" type="password" autocomplete="off" class="tm-input" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+      <input id="sbAppId" class="tm-input" placeholder="Application-ID des Markt-Bots (General Information)" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+      <input id="sbPubKey" class="tm-input" placeholder="Public Key des Markt-Bots (General Information)" style="width:100%;box-sizing:border-box;margin-bottom:6px">
       <input id="sbMarketCh" class="tm-input" placeholder="Markt-Kanal-ID" style="width:100%;box-sizing:border-box;margin-bottom:6px">
       <div style="display:flex;gap:6px;margin-bottom:6px"><input id="sbUrl" class="tm-input" readonly style="flex:1;min-width:0"><button id="sbUrlCopy" class="secondary" style="flex:none;width:auto;padding:6px 10px">📋</button></div>
       <div class="dt-muted" style="margin-bottom:6px">↑ Diese URL im Developer Portal bei „Interactions Endpoint URL" eintragen (erst Application-ID + Public Key speichern).</div>
@@ -2855,7 +2858,8 @@ async function srvRenderBotBox() {
       <div style="display:flex;gap:6px;margin-top:8px">
         <button id="sbSave" style="flex:1">💾 Speichern</button>
         <button id="sbTest" class="secondary" style="flex:1">📨 Test senden</button>
-        <button id="sbClear" class="secondary" style="flex:none;width:auto;padding:6px 10px">🗑️ Token</button>
+        <button id="sbClear" class="secondary" style="flex:none;width:auto;padding:6px 10px">🗑️ Status-Token</button>
+        <button id="sbMarketClear" class="secondary" style="flex:none;width:auto;padding:6px 10px">🗑️ Markt-Token</button>
       </div>
       <div id="sbInfo" class="dt-muted" style="margin-top:6px"></div>
     </div>`;
@@ -2870,10 +2874,10 @@ async function srvRenderBotBox() {
   el('sbUrl').value = `${config.tokenBase}/discord/interactions`;
   el('sbUrlCopy').onclick = async () => { let ok = false; try { ok = await window.bf.copyText(el('sbUrl').value); } catch {} if (!ok) { try { await navigator.clipboard.writeText(el('sbUrl').value); ok = true; } catch {} } showToast(ok ? '📋 URL kopiert' : 'Kopieren fehlgeschlagen', ok ? 'success' : 'error'); };
   info();
-  const apply = (d) => { cfg = d; el('sbToken').value = ''; info(); };
+  const apply = (d) => { cfg = d; el('sbToken').value = ''; el('sbMarketToken').value = ''; info(); };
   el('sbSave').onclick = async () => {
     try {
-      const d = await svApi('POST', '/admin/status-bot', { token: el('sbToken').value.trim(), channelId: el('sbChannel').value.trim(), intervalMin: parseInt(el('sbInterval').value, 10) || 5, enabled: el('sbEnabled').checked, serverName: el('sbName').value.trim(), applicationId: el('sbAppId').value.trim(), publicKey: el('sbPubKey').value.trim(), marketChannelId: el('sbMarketCh').value.trim(), marketEnabled: el('sbMarketEnabled').checked });
+      const d = await svApi('POST', '/admin/status-bot', { token: el('sbToken').value.trim(), marketToken: el('sbMarketToken').value.trim(), channelId: el('sbChannel').value.trim(), intervalMin: parseInt(el('sbInterval').value, 10) || 5, enabled: el('sbEnabled').checked, serverName: el('sbName').value.trim(), applicationId: el('sbAppId').value.trim(), publicKey: el('sbPubKey').value.trim(), marketChannelId: el('sbMarketCh').value.trim(), marketEnabled: el('sbMarketEnabled').checked });
       apply(d); el('sbEnabled').checked = !!d.enabled; el('sbMarketEnabled').checked = !!d.marketEnabled;
       const warn = d.lastError || d.marketError;
       showToast(warn ? '⚠️ Gespeichert, aber: ' + warn : (d.enabled || d.marketEnabled ? '🤖 Bot aktiv' : '💾 Gespeichert'), warn ? 'error' : 'success');
@@ -2883,8 +2887,12 @@ async function srvRenderBotBox() {
     try { const d = await svApi('POST', '/admin/status-bot/test', {}); apply(d); showToast('📨 Status-Nachricht gesendet', 'success'); }
     catch (e) { showToast(e.message, 'error'); srvRenderBotBox(); }
   };
-  el('sbClear').onclick = () => svArmConfirm(el('sbClear'), 'Sicher? Token löschen', async () => {
-    try { const d = await svApi('POST', '/admin/status-bot', { clearToken: true, channelId: el('sbChannel').value.trim(), intervalMin: parseInt(el('sbInterval').value, 10) || 5, enabled: false }); apply(d); el('sbEnabled').checked = false; el('sbMarketEnabled').checked = false; showToast('🗑️ Token gelöscht, Bot aus', 'success'); }
+  el('sbMarketClear').onclick = () => svArmConfirm(el('sbMarketClear'), 'Sicher? Markt-Token löschen', async () => {
+    try { const d = await svApi('POST', '/admin/status-bot', { clearMarketToken: true, channelId: el('sbChannel').value.trim(), intervalMin: parseInt(el('sbInterval').value, 10) || 5, enabled: el('sbEnabled').checked }); apply(d); el('sbMarketEnabled').checked = false; showToast('🗑️ Markt-Token gelöscht, Token-Markt-Bot aus', 'success'); }
+    catch (e) { showToast(e.message, 'error'); }
+  });
+  el('sbClear').onclick = () => svArmConfirm(el('sbClear'), 'Sicher? Status-Token löschen', async () => {
+    try { const d = await svApi('POST', '/admin/status-bot', { clearToken: true, channelId: el('sbChannel').value.trim(), intervalMin: parseInt(el('sbInterval').value, 10) || 5, enabled: false }); apply(d); el('sbEnabled').checked = false; showToast('🗑️ Status-Token gelöscht, Status-Bot aus', 'success'); }
     catch (e) { showToast(e.message, 'error'); }
   });
 }

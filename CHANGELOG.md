@@ -7,6 +7,16 @@
 
 ## [Unreleased]
 
+## v1.11.46 — Eigener Bot für den Token-Markt
+
+### 🔧 Sonstiges
+
+- Der Token-Markt auf Discord nutzt jetzt einen eigenen, zweiten Bot mit
+  eigenem Token, eigener Application-ID und eigenem Public Key. Im
+  Server-Panel (Übersicht → Discord-Bot) gibt es dafür ein eigenes
+  Token-Feld im Token-Markt-Abschnitt. Status-Bot und Markt-Bot lassen
+  sich getrennt eintragen und getrennt löschen.
+
 ## v1.11.45 — Quest-System entfernt
 
 ### 🔧 Sonstiges
