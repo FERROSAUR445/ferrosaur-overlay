@@ -7,6 +7,17 @@
 
 ## [Unreleased]
 
+## v1.11.37 — Prime-Status aus dem Spiel
+
+### 🐛 Fehlerbehoben
+
+- Ist dein Dino im Spiel bereits Prime, zeigt das Dino-Panel jetzt
+  „Prime erreicht" an. Bisher stand dort weiter 0/5, weil der Status des
+  Spiels nicht ans Overlay weitergegeben wurde.
+- Dasselbe gilt für das Prime-Abzeichen in der Garage-Detailansicht.
+- Der vierte Mutationsslot beim Insta-Grow erkennt Prime-Dinos jetzt
+  ebenfalls.
+
 ## v1.11.36 — Garage: Dinos wirklich tauschen
 
 ### ✨ Neu

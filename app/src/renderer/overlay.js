@@ -5164,10 +5164,12 @@ function checkPrimes(primes, dino) {
   if (prevPrimes) primes.forEach((v, i) => { if (v && !prevPrimes[i]) showToast(`✅ Elder-Bedingung erfüllt: ${PRIME_LABELS[i]}`, 'elder'); });
   prevPrimes = primes.slice();
 }
-function elderHTML(primes) {
+// gameSaysPrime: das Spiel selbst meldet den Dino als Prime (RCON PrimeElder) — dann gilt „erreicht", auch wenn
+// nicht alle Einzelbedingungen bei uns getrackt sind.
+function elderHTML(primes, gameSaysPrime) {
   const p = primes || [];
   const need = 5;
-  const met = p.filter(Boolean).length;
+  const met = gameSaysPrime ? Math.max(need, p.filter(Boolean).length) : p.filter(Boolean).length;
   const done = met >= need;
   const pct = Math.min(100, Math.round(met / need * 100));
   const head = `
@@ -5836,7 +5838,7 @@ function showDinoDetail(card, ctx) {
   // setzten es) - Quelle der Wahrheit ist wie im Dino-Info-Live-Panel das primes-Array
   // (5 von 10 Bedingungen erfuellt = Prime), siehe elderHTML().
   const primesArr = Array.isArray(card.primes) ? card.primes : [];
-  const isPrimeDone = primesArr.filter(Boolean).length >= 5;
+  const isPrimeDone = !!card.isPrimeElder || primesArr.filter(Boolean).length >= 5;
   const badges = [card.isElder ? '👑 Elder' : '', isPrimeDone ? '⭐ Prime' : '', card.gender || '', card.isBleeding ? '🩸 Blutet' : '']
     .filter(Boolean).map((b) => `<span class="di-mchip">${b}</span>`).join('');
   box.innerHTML = `
@@ -5853,7 +5855,7 @@ function showDinoDetail(card, ctx) {
       <div style="flex:1;min-width:0"><div class="sec-title">📊 Vitals</div>${vitalsHTML(card)}</div>
       <div style="flex:1;min-width:0"><div class="sec-title">🧬 Mutationen</div><div style="margin-top:6px">${mutHTML(card.mutations)}</div></div>
     </div>
-    <div style="margin-top:14px"><div class="sec-title">🏆 Prime-Fortschritt</div><div style="margin-top:6px">${elderHTML(primesArr)}</div></div>
+    <div style="margin-top:14px"><div class="sec-title">🏆 Prime-Fortschritt</div><div style="margin-top:6px">${elderHTML(primesArr, card.isPrimeElder)}</div></div>
     <div id="ddActions" style="margin-top:16px;display:flex;flex-direction:column;gap:8px">${action}<button class="secondary" id="ddClose">Schließen</button></div>`;
   el('dinoDetail').style.display = 'flex';
   box.querySelector('#ddClose').onclick = closeDinoDetail;
@@ -7094,7 +7096,7 @@ async function updateDinoInfo() {
     checkPrimes(null);   // offline → Prime-Basis zurücksetzen
     return;
   }
-  el('di-elder').innerHTML = elderHTML(d.primes);
+  el('di-elder').innerHTML = elderHTML(d.primes, d.isPrime);
   { const mu = el('di-mut'); if (mu) mu.innerHTML = mutHTML(d.mutations); }
   checkPrimes(d.primes, d.dino);   // schnellere Benachrichtigung solange F5 offen ist (2s)
   renderDinoTokens(d.tokens);
