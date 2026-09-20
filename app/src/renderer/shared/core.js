@@ -50,7 +50,7 @@ export function makeApiAction({ api, toast, after }) {
   return async function apiAction(path, body, okMsg, reload) {
     try {
       const d = await api('POST', path, body || {});
-      toast(okMsg.replace('{dino}', d.dino || ''), 'success');
+      toast(d.notice || okMsg.replace('{dino}', d.dino || ''), 'success');
       if (after) after();
       if (reload) await reload();
     } catch (err) { toast(err.message, 'error'); }

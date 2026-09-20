@@ -7,6 +7,17 @@
 
 ## [Unreleased]
 
+## v1.11.36 — Garage: Dinos wirklich tauschen
+
+### ✨ Neu
+
+- Einparken, Ausparken und Tauschen funktionieren jetzt für alle Spieler
+  im Spiel: „Tauschen" parkt deinen aktuellen Dino ein und du landest im
+  Spawn-Menü. Wählst du dort die Spezies des Garagen-Dinos, werden
+  Wachstum, Skin und Nährstoffe automatisch wiederhergestellt.
+- Mutationen lassen sich nicht wiederherstellen und bleiben die des neuen
+  Spawns.
+
 ## v1.11.35 — Nährstoff-Waben und roter Team-Skin im Dienst
 
 ### ✨ Neu
