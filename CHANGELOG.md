@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.41 — Dino-Markt entfernt
+
+### 🔧 Sonstiges
+
+- Der Dino-Markt (Angebote, Gesuche und „An Spieler listen") ist aus dem
+  Overlay entfernt. Der Markt zeigt nur noch den Token-Markt und „Meine
+  Angebote". Dinos an den Server verkaufen geht weiterhin in der Garage.
+
 ## v1.11.40 — Quest direkt im Spiel starten
 
 ### ✨ Neu

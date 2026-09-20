@@ -4092,7 +4092,7 @@ const HK_LABELS = {
   'dino-info': 'Dino-Info',
   'skin-editor': 'Skin Editor',
   'garage': 'Garage',
-  'market': 'Dino-Markt',
+  'market': 'Markt',
   'group': 'Gruppe',
   'profile': 'Profil',
   'lexikon': 'Dino-Lexikon',
@@ -5837,7 +5837,6 @@ function showDinoDetail(card, ctx) {
       + sellBtn
       + `<button id="ddDelete" class="secondary" style="width:100%;color:#fca5a5;border-color:#7f1d1d">🗑️ Aus Garage löschen</button>`;
   }
-  else if (ctx.mode === 'market') action = ctx.mine ? `<div class="price-tag" style="margin-bottom:8px">Dein Angebot · ${(ctx.price || 0).toLocaleString('de-DE')} Pkt.</div><button id="ddWithdraw" class="secondary" style="width:100%">↩️ Angebot zurückziehen</button>` : `<button id="ddBuy" style="width:100%;margin-top:14px">🦖 Kaufen — ${(ctx.price || 0).toLocaleString('de-DE')} Pkt.</button>`;
   box.classList.add('dd-box-wide');
   // isPrime kam nie als eigenes Feld auf Garage-Slots an (weder Admin-Grant noch Park/Swap
   // setzten es) - Quelle der Wahrheit ist wie im Dino-Info-Live-Panel das primes-Array
@@ -5873,8 +5872,6 @@ function showDinoDetail(card, ctx) {
     }; }
   const u = box.querySelector('#ddUnpark'); if (u) u.onclick = () => { closeDinoDetail(); unparkById(card.id); };
   const sw = box.querySelector('#ddSwap'); if (sw && !sw.disabled) sw.onclick = () => { closeDinoDetail(); apiAction('/garage/swap', { slotId: card.id }, '🔄 Gswapt zu {dino}', loadGarage); };
-  const b = box.querySelector('#ddBuy'); if (b) b.onclick = () => { closeDinoDetail(); buyOfferId(card.id); };
-  const wd = box.querySelector('#ddWithdraw'); if (wd) wd.onclick = () => { closeDinoDetail(); apiAction('/market/withdraw', { offerId: card.id }, '↩️ Angebot zurückgezogen', loadMarket); };
   const ss = box.querySelector('#ddSellServer');
   if (ss && !ss.disabled) ss.onclick = () => {
     const price = card.serverPrice ?? 0;
@@ -5897,7 +5894,6 @@ function showDinoDetail(card, ctx) {
 // einem Objekt die Meldung „[object Object]".
 const apiAction = makeApiAction({ api: svApi, toast: (m, k) => showToast(m, k), after: () => pollHud() });
 const unparkById = (id) => apiAction('/garage/unpark', { slotId: id }, '⬆️ {dino} ausgeparkt', loadGarage);
-const buyOfferId = (id) => apiAction('/market/buy', { offerId: id }, '🦖 {dino} gekauft!', loadMarket);
 
 // ── Garage (Karten-Grid) ─────────────────────────────────────────────────────
 let garageCooldowns = {}; // zuletzt geladene Cooldowns (park/unpark/swap) — für die Swap-Sperre im Dino-Detail (B-7)
@@ -6309,202 +6305,24 @@ function renderSkinTemplates() {
   }
 }
 
-// ── Dino-Markt (Karten-Grid + Angebot erstellen) ───────────────────────────
-let marketView = 'offers'; // 'offers' | 'create'
-// Diät pro Spezies (für Markt-Filter/Gruppierung). Omnivoren als eigene Kategorie.
-const DINO_DIET = {
-  Tyrannosaurus: 'carni', Rex: 'carni', Allosaurus: 'carni', Carnotaurus: 'carni', Ceratosaurus: 'carni', Deinosuchus: 'carni', Dilophosaurus: 'carni', Herrerasaurus: 'carni', Omniraptor: 'carni', Pteranodon: 'carni', Troodon: 'carni',
-  Triceratops: 'herbi', Stegosaurus: 'herbi', Diabloceratops: 'herbi', Tenontosaurus: 'herbi', Maiasaura: 'herbi', Maiasaurus: 'herbi', Pachycephalosaurus: 'herbi', Dryosaurus: 'herbi', Hypsilophodon: 'herbi',
-  Gallimimus: 'omni', Beipiaosaurus: 'omni',
-};
-const dietOfDino = (c) => DINO_DIET[(c || '').split('_')[0]] || 'other';
-// [key, Chip-Label, Gruppen-Label, Farbe]
-const MK_DIETS = [['carni', '🥩 Karni', 'Karnivoren', '#ef4444'], ['herbi', '🌿 Herbi', 'Herbivoren', '#22c55e'], ['omni', '🍃 Omni', 'Omnivoren', '#eab308']];
-let marketSearch = '', marketDiet = 'all', marketSort = 'price-asc', marketOffers = [];
-let marketTab = 'dino'; // 'dino' | 'token' | 'mine' — oberster Markt-Tab
+// ── Markt (Token-Markt + Meine Angebote) ───────────────────────────────────
+let marketTab = 'token'; // 'token' | 'mine' — oberster Markt-Tab
 async function renderMarket() {
   el('market').classList.add('m-wide');
   el('market').innerHTML = `
     <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button id="mtDino" style="flex:1">🦖 Dino-Markt</button>
-      <button id="mtToken" class="secondary" style="flex:1">🎁 Token-Markt</button>
+      <button id="mtToken" style="flex:1">🎁 Token-Markt</button>
       <button id="mtMine" class="secondary" style="flex:1">📋 Meine</button>
     </div>
     <div id="mkRoot"></div>`;
-  el('mtDino').onclick = () => { if (marketTab !== 'dino') { marketTab = 'dino'; renderMarketTab(); } };
   el('mtToken').onclick = () => { if (marketTab !== 'token') { marketTab = 'token'; renderMarketTab(); } };
   el('mtMine').onclick = () => { if (marketTab !== 'mine') { marketTab = 'mine'; renderMarketTab(); } };
   renderMarketTab();
 }
 function renderMarketTab() {
-  [['mtDino', 'dino'], ['mtToken', 'token'], ['mtMine', 'mine']].forEach(([id, v]) => { const b = el(id); if (b) b.className = marketTab === v ? '' : 'secondary'; });
-  if (marketTab === 'dino') renderDinoMarket();
-  else if (marketTab === 'token') renderTokenMarket();
+  [['mtToken', 'token'], ['mtMine', 'mine']].forEach(([id, v]) => { const b = el(id); if (b) b.className = marketTab === v ? '' : 'secondary'; });
+  if (marketTab === 'token') renderTokenMarket();
   else renderMyOffers();
-}
-function renderDinoMarket() {
-  el('mkRoot').innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h2 style="margin:0">🦖 Dino-Markt</h2>
-      <span id="mkPoints" class="price-tag">… Pkt.</span>
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button id="mkTabOffers" style="flex:1">Angebote</button>
-      <button id="mkTabWants" class="secondary" style="flex:1">🔎 Gesuche</button>
-      <button id="mkTabCreate" class="secondary" style="flex:1">➕ Verkaufen</button>
-    </div>
-    <div id="mkControls" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-      <input id="mkSearch" placeholder="🔍 Spezies suchen…" style="flex:1;min-width:150px;padding:8px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.25);color:#eee;font-size:13px">
-      <div id="mkDiet" style="display:flex;gap:4px"></div>
-      <select id="mkSort" class="bf-select" style="width:auto;flex:none">
-        <option value="price-asc">Preis ↑</option>
-        <option value="price-desc">Preis ↓</option>
-        <option value="name">Name A–Z</option>
-        <option value="grow-desc">Wachstum ↓</option>
-      </select>
-    </div>
-    <div id="mkBody"></div>`;
-  el('mkTabOffers').onclick = () => { marketView = 'offers'; loadMarket(); };
-  el('mkTabWants').onclick = () => { marketView = 'wants'; loadMarket(); };
-  el('mkTabCreate').onclick = () => { marketView = 'create'; loadMarket(); };
-  const dietBox = el('mkDiet');
-  const chips = [['all', 'Alle', '', 'var(--accent)'], ...MK_DIETS];
-  dietBox.innerHTML = chips.map(([k, l, , c]) => `<button class="mk-chip${marketDiet === k ? ' on' : ''}" data-diet="${k}" style="--c:${c}">${l}</button>`).join('');
-  dietBox.querySelectorAll('.mk-chip').forEach((b) => { b.onclick = () => { marketDiet = b.dataset.diet; dietBox.querySelectorAll('.mk-chip').forEach((x) => x.classList.toggle('on', x.dataset.diet === marketDiet)); renderMarketOffers(); }; });
-  const se = el('mkSearch'); se.value = marketSearch; se.oninput = (e) => { marketSearch = e.target.value; renderMarketOffers(); };
-  const so = el('mkSort'); so.value = marketSort; so.onchange = (e) => { marketSort = e.target.value; renderMarketOffers(); };
-  marketView = 'offers';
-  loadMarket();
-}
-let dmState = null, dmGarage = [];
-async function loadMarket() {
-  if (!el('mkTabOffers')) return;
-  [['mkTabOffers', 'offers'], ['mkTabWants', 'wants'], ['mkTabCreate', 'create']].forEach(([id, v]) => { const b = el(id); if (b) b.className = marketView === v ? '' : 'secondary'; });
-  const ctrl = el('mkControls'); if (ctrl) ctrl.style.display = marketView === 'offers' ? 'flex' : 'none';
-  const body = el('mkBody'); body.innerHTML = '<div style="color:var(--muted);font-size:13px">Lade…</div>';
-  try {
-    const [m, g] = await Promise.all([
-      fetch(`${config.tokenBase}/market`, { headers: { Authorization: `Bearer ${sessionToken}` } }).then((r) => r.json()),
-      fetch(`${config.tokenBase}/garage`, { headers: { Authorization: `Bearer ${sessionToken}` } }).then((r) => r.json()),
-    ]);
-    dmState = m; dmGarage = g.slots || [];
-    el('mkPoints').textContent = `${(m.points || 0).toLocaleString('de-DE')} Pkt.`;
-    if (marketView === 'offers') { marketOffers = m.offers || []; renderMarketOffers(); }
-    else if (marketView === 'wants') { renderDinoWants(); }
-    else {
-      const slots = dmGarage;
-      if (!slots.length) { body.innerHTML = '<div style="color:var(--muted);font-size:13px">Garage leer — nichts zu verkaufen.</div>'; return; }
-      body.innerHTML = '<p style="color:var(--muted);font-size:13px;margin-bottom:8px">Wähle einen Dino zum Verkaufen.</p>';
-      const grid = document.createElement('div'); grid.className = 'dino-grid'; body.appendChild(grid);
-      for (const s of slots) grid.appendChild(dinoCardEl(s, () => showSellDialog(s)));
-    }
-  } catch { body.innerHTML = '<div style="color:#ef4444;font-size:13px">Markt konnte nicht geladen werden.</div>'; }
-}
-// Dino-Gesuche (Suche Dino X, biete …) — stöbern, erfüllen, selbst aufgeben
-function renderDinoWants() {
-  const body = el('mkBody'); if (!body || !dmState) return;
-  const wants = dmState.wants || [];
-  let html = '<div style="margin-bottom:12px"><button id="dwNew">➕ Gesuch aufgeben</button></div>';
-  html += wants.length ? wants.map((w) => `
-    <div class="tm-row"><div class="tm-info"><b>Suche ${escapeHtml(w.wantDino)}</b><span style="${tmMuted}">bietet ${escapeHtml(w.offerText || '')} · von ${escapeHtml(w.requesterName || '?')}</span></div>
-      ${w.mine ? `<button class="secondary" data-wcancel="${w.id}">Zurückziehen</button>` : `<button data-wfill="${w.id}" data-dino="${escapeHtml(w.wantDino)}">Erfüllen</button>`}</div>`).join('')
-    : `<div style="${tmMuted}">Keine Dino-Gesuche. Gib selbst eins auf! 🔎</div>`;
-  body.innerHTML = html;
-  el('dwNew').onclick = () => showDinoWantForm();
-  body.querySelectorAll('[data-wcancel]').forEach((b) => { b.onclick = () => apiAction('/wants/cancel', { wantId: b.dataset.wcancel }, '↩️ Gesuch zurückgezogen', loadMarket); });
-  body.querySelectorAll('[data-wfill]').forEach((b) => { b.onclick = () => fulfillDinoWant(b.dataset.wfill, b.dataset.dino); });
-}
-function showDinoWantForm() {
-  const body = el('mkBody');
-  const spOpts = Object.keys(DINO_DIET).sort().map((sp) => `<option value="${sp}">${sp}</option>`).join('');
-  const allTok = (dmState.tokenDefs || []).map((t) => `<option value="${t.id}">${t.emoji} ${t.label}</option>`).join('');
-  const q25 = Array.from({ length: 25 }, (_, i) => `<option value="${i + 1}">${i + 1}×</option>`).join('');
-  body.innerHTML = `
-    <div class="tm-form">
-      <label>Gesuchter Dino</label><select id="dwDino" class="bf-select">${spOpts}</select>
-      <label>Gebot-Art</label><select id="dwKind" class="bf-select"><option value="points">💰 Punkte</option><option value="token">🎁 Token</option></select>
-      <div id="dwPriceWrap"></div>
-      <div style="display:flex;gap:6px;margin-top:10px"><button id="dwSubmit" style="flex:1">🔎 Gesuch aufgeben (${dmState.offerHours || 72}h)</button><button id="dwBack" class="secondary" style="flex:none">Zurück</button></div>
-    </div>`;
-  const fillPrice = () => {
-    el('dwPriceWrap').innerHTML = el('dwKind').value === 'points'
-      ? '<label>Gebot (Punkte)</label><input id="dwAmt" type="number" min="1" placeholder="z.B. 5000" class="tm-input">'
-      : `<label>Gebot-Token</label><select id="dwPtok" class="bf-select">${allTok}</select><label>Menge</label><select id="dwPamt" class="bf-select">${q25}</select>`;
-  };
-  el('dwKind').onchange = fillPrice; fillPrice();
-  el('dwBack').onclick = () => { marketView = 'wants'; loadMarket(); };
-  el('dwSubmit').onclick = () => {
-    const kind = el('dwKind').value;
-    const payload = { wantKind: 'dino', wantDino: el('dwDino').value, offerKind: kind };
-    if (kind === 'points') { const a = parseInt(el('dwAmt').value); if (!a || a <= 0) { showToast('Bitte gültiges Punkte-Gebot eingeben', 'error'); return; } payload.offerAmount = a; }
-    else { payload.offerAmount = parseInt(el('dwPamt').value); payload.offerTokenType = el('dwPtok').value; }
-    apiAction('/wants/create', payload, '🔎 Gesuch aufgegeben', () => { marketView = 'wants'; loadMarket(); });
-  };
-}
-function fulfillDinoWant(wantId, dino) {
-  const matches = (dmGarage || []).filter((s) => (s.snapshot?.dinoClass || '').split('_')[0] === dino);
-  if (!matches.length) { showToast(`Du hast keinen ${dino} in der Garage.`, 'error'); return; }
-  const box = el('dinoDetail').querySelector('.box');
-  box.innerHTML = `<div style="font-weight:700;margin-bottom:10px">Welchen ${escapeHtml(dino)} liefern?</div><div class="dino-grid" id="wfGrid"></div><button class="secondary" id="wfClose" style="width:100%;margin-top:10px">Abbrechen</button>`;
-  el('dinoDetail').style.display = 'flex';
-  const grid = box.querySelector('#wfGrid');
-  matches.forEach((s) => grid.appendChild(dinoCardEl(s, () => { closeDinoDetail(); apiAction('/wants/fulfill', { wantId, slotId: s.id }, '✅ Gesuch erfüllt!', loadMarket); })));
-  box.querySelector('#wfClose').onclick = closeDinoDetail;
-}
-// Angebote filtern (Suche + Diät) + sortieren + nach Diät gruppiert anzeigen
-function renderMarketOffers() {
-  const body = el('mkBody'); if (!body) return;
-  let offers = marketOffers.slice();
-  const q = marketSearch.trim().toLowerCase();
-  if (q) offers = offers.filter((o) => (o.dino || '').toLowerCase().includes(q));
-  if (marketDiet !== 'all') offers = offers.filter((o) => dietOfDino(o.dino) === marketDiet);
-  const sorters = {
-    'price-asc': (a, b) => (a.price || 0) - (b.price || 0),
-    'price-desc': (a, b) => (b.price || 0) - (a.price || 0),
-    'name': (a, b) => (a.dino || '').localeCompare(b.dino || ''),
-    'grow-desc': (a, b) => (b.grow || 0) - (a.grow || 0),
-  };
-  offers.sort(sorters[marketSort] || sorters['price-asc']);
-  if (!offers.length) { body.innerHTML = `<div style="color:var(--muted);font-size:13px">${marketOffers.length ? 'Keine passenden Angebote.' : 'Keine Angebote.'}</div>`; return; }
-  body.innerHTML = '';
-  const addCard = (grid, o) => {
-    const card = dinoCardEl(o, () => showDinoDetail(o, { mode: 'market', price: o.price, mine: o.mine }));
-    const tag = document.createElement('div'); tag.className = 'price-tag'; tag.style.borderRadius = '0';
-    tag.textContent = `${(o.price || 0).toLocaleString('de-DE')} Pkt.${o.mine ? ' (deins)' : ''}`;
-    card.appendChild(tag); grid.appendChild(card);
-  };
-  for (const [key, , label, color] of [...MK_DIETS, ['other', '', 'Sonstige', '#888']]) {
-    const list = offers.filter((o) => dietOfDino(o.dino) === key);
-    if (!list.length) continue;
-    const head = document.createElement('div'); head.className = 'mk-group-head'; head.style.color = color;
-    head.innerHTML = `● ${label} <span style="color:var(--muted);font-weight:400">(${list.length})</span>`;
-    body.appendChild(head);
-    const grid = document.createElement('div'); grid.className = 'dino-grid'; body.appendChild(grid);
-    for (const o of list) addCard(grid, o);
-  }
-}
-function showSellDialog(card) {
-  const box = el('dinoDetail').querySelector('.box');
-  // Server-Ankaufspreis ist spezies-abhängig (kommt pro Slot vom Backend als serverPrice) — NICHT
-  // fest 500. Grow-Gate wie in der Garage-Ansicht: Verkauf erst ab sellMinGrow (Standard 75 %).
-  const price = card.serverPrice ?? 0;
-  const minG = card.sellMinGrow ?? 0.75, growPct = Math.round((card.grow || 0) * 100), minPct = Math.round(minG * 100);
-  const canSell = (card.grow || 0) >= minG;
-  const serverBtn = canSell
-    ? `<button id="sdServer" style="width:100%;margin-bottom:8px">💰 An Server verkaufen (+${price.toLocaleString('de-DE')})</button>`
-    : `<button id="sdServer" style="width:100%;margin-bottom:8px;opacity:.55;cursor:not-allowed" disabled title="Verkauf erst ab ${minPct}% Wachstum — aktuell ${growPct}%.">💰 An Server verkaufen (ab ${minPct}%)</button>`;
-  box.innerHTML = `<div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">${dinoPreview(card, 'dd')}<div><div style="font-size:18px;font-weight:700">${card.dinoClass}${card.isElder ? ' 👑' : ''}</div><div style="font-size:12px;color:var(--muted)">${card.gender || ''} · ${fmtGrow(card.grow || 0)}</div></div></div>
-    ${serverBtn}
-    <div style="display:flex;gap:6px;margin-bottom:8px">
-      <input id="sdPrice" type="number" min="1" placeholder="Preis in Punkten" style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--input-bg);color:#eee;font-size:13px">
-      <button id="sdPlayer" style="flex:none;padding:9px 14px">An Spieler listen</button>
-    </div>
-    <button class="secondary" id="sdClose" style="width:100%">Abbrechen</button>`;
-  el('dinoDetail').style.display = 'flex';
-  box.querySelector('#sdClose').onclick = closeDinoDetail;
-  const ss = box.querySelector('#sdServer');
-  if (ss && !ss.disabled) ss.onclick = () => { closeDinoDetail(); apiAction('/market/sell-server', { slotId: card.id }, `💰 An Server verkauft (+${price})`, loadMarket); };
-  box.querySelector('#sdPlayer').onclick = () => { const p = parseInt(box.querySelector('#sdPrice').value); if (!p || p <= 0) { showToast('Bitte gültigen Preis eingeben', 'error'); return; } closeDinoDetail(); apiAction('/market/sell-player', { slotId: card.id, price: p }, '🏷️ Angebot erstellt', loadMarket); };
 }
 
 // ── Token-Markt (Auktionshaus + Direkt-Tausch) ─────────────────────────────
@@ -6674,14 +6492,11 @@ function renderTokenTrade(body) {
 async function renderMyOffers() {
   el('mkRoot').innerHTML = '<h2 style="margin:0 0 12px">📋 Meine Angebote</h2><div id="myBody"><div style="' + tmMuted + '">Lade…</div></div>';
   try {
-    const [m, tm] = await Promise.all([
-      fetch(`${config.tokenBase}/market`, { headers: { Authorization: `Bearer ${sessionToken}` } }).then((r) => r.json()),
+    const [tm] = await Promise.all([
       fetch(`${config.tokenBase}/tokenmarket`, { headers: { Authorization: `Bearer ${sessionToken}` } }).then((r) => r.json()),
     ]);
     const lbl = (id, data) => { const d = (data.tokenDefs || []).find((x) => x.id === id) || { emoji: '🎁', label: id }; return `${d.emoji} ${d.label}`; };
     const rows = [];
-    (m.offers || []).filter((o) => o.mine).forEach((o) => rows.push({ t: `🦖 ${o.dino} — ${(o.price || 0).toLocaleString('de-DE')} Pkt.`, sub: 'Dino-Angebot', act: () => apiAction('/market/withdraw', { offerId: o.id }, '↩️ Zurückgezogen', renderMyOffers) }));
-    (m.wants || []).filter((w) => w.mine).forEach((w) => rows.push({ t: `🔎 Suche ${w.wantDino} — bietet ${w.offerText}`, sub: 'Dino-Gesuch', act: () => apiAction('/wants/cancel', { wantId: w.id }, '↩️ Zurückgezogen', renderMyOffers) }));
     (tm.auctions || []).filter((a) => a.mine).forEach((a) => rows.push({ t: `🏛️ ${a.qty}× ${lbl(a.tokenType, tm)} — ${a.priceText}`, sub: 'Token-Auktion', act: () => apiAction('/tokenmarket/auction/cancel', { auctionId: a.id }, '↩️ Zurückgezogen', renderMyOffers) }));
     (tm.wants || []).filter((w) => w.mine).forEach((w) => rows.push({ t: `🔎 Suche ${w.wantQty}× ${lbl(w.wantTokenType, tm)} — bietet ${w.offerText}`, sub: 'Token-Gesuch', act: () => apiAction('/wants/cancel', { wantId: w.id }, '↩️ Zurückgezogen', renderMyOffers) }));
     (tm.trades?.outgoing || []).forEach((t) => rows.push({ t: `🔄 an ${t.toName}: ${t.giveQty}× ${lbl(t.giveType, tm)} → ${t.wantQty}× ${lbl(t.wantType, tm)}`, sub: 'Tausch-Angebot', act: () => apiAction('/tokenmarket/trade/cancel', { tradeId: t.id }, '↩️ Zurückgezogen', renderMyOffers) }));
