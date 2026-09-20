@@ -15,6 +15,9 @@
   im Spiel: „Tauschen" parkt deinen aktuellen Dino ein und du landest im
   Spawn-Menü. Wählst du dort die Spezies des Garagen-Dinos, werden
   Wachstum, Skin und Nährstoffe automatisch wiederhergestellt.
+- Tauschst du gegen einen Dino derselben Spezies, wird dein aktueller Dino
+  eingeparkt und der gespeicherte sofort aktiv — ohne Tod und ohne
+  Spawn-Menü.
 - Mutationen lassen sich nicht wiederherstellen und bleiben die des neuen
   Spawns.
 
