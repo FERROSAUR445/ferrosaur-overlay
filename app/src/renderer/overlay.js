@@ -5945,7 +5945,7 @@ async function renderSkinEditor() {
   const liveMsg = skinPays
     ? '🟢 Live-Vorschau — mit „Bestätigen" wird der Skin übernommen (50 Pkt/Farbe). Schließen ohne Bestätigen setzt zurück.'
     : '🟢 Änderungen werden live im Spiel übernommen';
-  panel.innerHTML = `<h2>🎨 Skin Editor — ${me.dino}</h2>
+  panel.innerHTML = `<h2 title="Ziehen zum Verschieben">🎨 Skin Editor — ${me.dino} <span style="font-size:11px;font-weight:400;-webkit-text-fill-color:var(--muted)">✥ Kopfzeile ziehen = Fenster verschieben</span></h2>
     <div style="font-size:12px;color:#f59e0b;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:8px;padding:8px 10px;margin:2px 0 12px">⚠️ Deine Auswahl wird gespeichert, aber <b>noch nicht live auf deinen Dino im Spiel übertragen</b> — das kommt in einem späteren Update.</div>
     <div id="skLive" style="font-size:12px;color:${skinPays ? '#f59e0b' : '#22c55e'};margin:2px 0 14px">${liveMsg}</div>
     <div class="sec-title">🎭 Rollplay-Name</div>
@@ -7899,10 +7899,13 @@ function refreshEditAffordances() {
     if (shown) addHideToggle(e, h.id); else removeHideToggle(e);
   }
 }
+// Panels, die auch außerhalb des Edit-Modus per Kopfzeile (h2) verschoben werden können (z. B. um den Dino zu sehen).
+const HEADER_DRAG_IDS = new Set(['skinEditor']);
 function makeDraggable(elm, id) {
   let dragging = false, ox = 0, oy = 0;
   elm.addEventListener('mousedown', (e) => {
-    if (!editMode) return;
+    const headDrag = !editMode && HEADER_DRAG_IDS.has(id) && e.target.closest && e.target.closest('h2');
+    if (!editMode && !headDrag) return;
     if (e.target.classList && e.target.classList.contains('bf-resize')) return; // Resize-Griff separat
     e.preventDefault(); e.stopPropagation();
     dragging = true; elm.classList.add('dragging');

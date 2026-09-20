@@ -495,6 +495,8 @@ body.bf-edit #growTimer, body.bf-edit #goldenHud, body.bf-edit #parkWarn, body.b
   background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 26px; width: clamp(400px, 34vw, 600px); max-height: 84vh; overflow: auto; font-size: 14px; box-shadow: var(--glow-strong); }
 .feature-panel h2, #settings h2 { background: linear-gradient(90deg, #fff, var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .feature-panel h2 { font-size: 17px; margin-bottom: 12px; }
+#skinEditor h2 { cursor: grab; user-select: none; }
+#skinEditor h2:active { cursor: grabbing; }
 .feature-panel p { color: var(--muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
 .closeFeature { width: 100%; }
 /* F5 Dino-Info: breit, Elder links + Vitals (mit Token rechts neben Balken) */

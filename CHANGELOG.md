@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.47 — Skin-Fenster verschiebbar
+
+### ✨ Neu
+
+- Das Skin-Editor-Fenster lässt sich jetzt direkt an der Kopfzeile ziehen
+  (ohne Edit-Modus), damit du deinen Dino dahinter siehst. Die Position
+  wird gemerkt; „Layout zurücksetzen" in den Einstellungen stellt sie
+  wieder her.
+
 ## v1.11.46 — Eigener Bot für den Token-Markt
 
 ### 🔧 Sonstiges
