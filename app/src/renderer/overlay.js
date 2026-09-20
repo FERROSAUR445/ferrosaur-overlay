@@ -4340,7 +4340,6 @@ function toggleFeature(id) {
   else if (id === 'profile') { renderProfile(); loadMyTickets(); loadMyEvents(); }
   else if (id === 'lexikon') renderLexikon();
   else if (id === 'skinEditor') renderSkinEditor();
-  else if (id === 'quests') { loadQuest(); startQuestPoll(); }
   else if (id === 'lootbox') renderLootbox();
   else if (id === 'notifications') renderNotifications();
   else if (id === 'leaderboard') renderLeaderboard();
@@ -4353,9 +4352,8 @@ function closeAllFeatures(skipInteractive) {
     revertSkinPreview();
     showToast('🎨 Vorschau verworfen — Skin zurückgesetzt', '');
   }
-  ['dinoInfo', 'skinEditor', 'garage', 'market', 'group', 'profile', 'lexikon', 'quests', 'leaderboard', 'lootbox', 'notifications'].forEach((id) => { el(id).style.display = 'none'; });
+  ['dinoInfo', 'skinEditor', 'garage', 'market', 'group', 'profile', 'lexikon', 'leaderboard', 'lootbox', 'notifications'].forEach((id) => { el(id).style.display = 'none'; });
   const tc = el('ticketChat'); if (tc) tc.style.display = 'none';   // Ticket-Chat mit schließen
-  stopQuestPoll();
   if (featureOpen === 'dinoInfo') stopDinoInfo();
   featureOpen = null;
   if (!skipInteractive) updateInteractive();
@@ -4724,10 +4722,6 @@ function renderProfile() {
     ? `${escapeHtml(d.dino || '?')} · ${d.gender === 'Female' ? '♀' : '♂'} · ${fmtGrow(d.grow || 0)}${tags.length ? ' · ' + tags.join(' · ') : ''}`
     : 'Aktuell nicht im Spiel';
   const inGroup = !!(me && (me.groupId || players.some((p) => p.ovgroup)));
-  const qa = questState && questState.active;
-  const questLine = qa
-    ? (qa.status === 'active' ? '🟢 Läuft' : qa.status === 'rolled' ? '⏳ Bereit zum Start' : qa.status === 'failed' ? '❌ Fehlgeschlagen' : '—')
-    : 'Keine aktive Quest';
   const pfStat = (ico, label, val, wide) => `<div class="pf-stat${wide ? ' pf-stat-wide' : ''}"><div class="pf-stat-l">${ico} ${label}</div><div class="pf-stat-v">${val}</div></div>`;
   const avInner = d.avatarUrl
     ? `<img class="pf-av" src="${d.avatarUrl}" alt="">`
@@ -4757,7 +4751,6 @@ function renderProfile() {
           ${pfStat('💰', 'Punkte', (d.points || 0).toLocaleString('de-DE'))}
           ${pfStat('⏱️', 'Spielzeit', fmtPlaytime(d.playtime))}
           ${pfStat('👥', 'Gruppe', inGroup ? 'In einer Gruppe' : 'Allein')}
-          ${pfStat('📜', 'RP-Quest', questLine)}
           ${pfStat('🦖', 'Aktueller Dino', escapeHtml(onlineDino), true)}
         </div>
         <div class="pf-inv">🎟️ Inventar: <b>${escapeHtml(tokenList)}</b></div>
@@ -4980,172 +4973,6 @@ function renderTicketChat(modal, channelId, ticketId, category, messages) {
     <div style="margin-top:10px;font-size:11px;color:var(--muted)">Zum Antworten ins Discord-Ticket schreiben.</div>`;
   el('ticketChatClose').onclick = closeTicketChat;
   const sc = el('ticketChatScroll'); if (sc) sc.scrollTop = sc.scrollHeight;   // ans Ende scrollen (neueste sichtbar)
-}
-
-// ── Quests (RP-Challenge: Dino + Handicap + Kleinigkeit + RP-Rolle) ───────────
-let questState = { rollsToday: 0, dailyLimit: 2, growTarget: 0.8, active: null, doneCount: 0, progress: null };
-let questRolling = false;
-let questPollTimer = null;
-const QUEST_DINO_NAMES = ['Tyrannosaurus', 'Allosaurus', 'Carnotaurus', 'Ceratosaurus', 'Dilophosaurus', 'Herrerasaurus', 'Omniraptor', 'Troodon', 'Pteranodon', 'Deinosuchus', 'Triceratops', 'Diabloceratops', 'Stegosaurus', 'Tenontosaurus', 'Dryosaurus', 'Hypsilophodon', 'Pachycephalosaurus', 'Maiasaura', 'Gallimimus'];
-
-function startQuestPoll() { stopQuestPoll(); questPollTimer = setInterval(() => { if (featureOpen === 'quests' && !questRolling) loadQuest(); }, 5000); }
-function stopQuestPoll() { if (questPollTimer) clearInterval(questPollTimer); questPollTimer = null; }
-
-async function loadQuest() {
-  if (!sessionToken) return;
-  try {
-    const r = await fetch(`${config.tokenBase}/me/quest`, { headers: { Authorization: `Bearer ${sessionToken}` } });
-    if (!r.ok) return;
-    const d = await r.json();
-    const prevId = questState.active && questState.active.id;
-    const prevStatus = questState.active && questState.active.status;
-    questState = d;
-    if (featureOpen !== 'quests' || questRolling) return;
-    if (d.justCompleted) { showToast(`🏆 RP-Quest erfüllt! +${(d.reward || 0).toLocaleString('de-DE')} Punkte`, 'success'); pollHud(); renderQuests(); return; }
-    // Gleiche Quest UND gleicher Status → nur die Fortschritts-Chips updaten (kein Flackern).
-    // Statuswechsel (rolled→active→failed) → voll neu rendern (Buttons ändern sich).
-    const sameView = d.active && d.active.id === prevId && d.active.status === prevStatus;
-    if (sameView && el('qProgress')) { const p = el('qProgress'); p.outerHTML = questProgressHtml(); }
-    else renderQuests();
-  } catch {}
-}
-
-function questLinesHtml(a) {
-  const L = (ico, k, v) => `<div class="q-line"><div class="q-l-ico">${ico}</div><div><div class="q-l-k">${k}</div><div class="q-l-v">${escapeHtml(v)}</div></div></div>`;
-  return L('🦖', 'Dino', a.dinoName || a.dino)
-    + L('⛓️', 'Handicap', a.handicap)
-    + L('🎭', 'RP-Rolle', a.rpRole)
-    + L('✨', 'Kleinigkeit', a.kleinigkeit);
-}
-function questProgressHtml() {
-  const p = questState.progress, a = questState.active; if (!a) return '';
-  if (a.status === 'rolled') return `<div class="q-progress" id="qProgress"><span class="q-chip no">⏳ Quest-Fortschritt: nicht gestartet</span></div>`;
-  if (a.status === 'failed') return `<div class="q-progress" id="qProgress"><span class="q-chip no" style="color:#fca5a5">❌ Quest fehlgeschlagen — versuch es erneut</span></div>`;
-  const target = Math.round((questState.growTarget || 0.8) * 100);
-  let chips;
-  if (a.instaUsed) {
-    chips = `<span class="q-chip no">⚡ Insta-Grow benutzt — zählt nicht mehr</span>`;
-  } else if (p && p.dead) {
-    chips = `<span class="q-chip no" style="color:#fca5a5">💀 Gestorben…</span>`;
-  } else if (!p || !p.online) {
-    chips = `<span class="q-chip no">Nicht im Spiel</span>`;
-  } else {
-    const dinoOk = p.rightDino;
-    const growOk = (p.grow || 0) >= (questState.growTarget || 0.8);
-    chips = `<span class="q-chip ${dinoOk ? 'ok' : 'no'}">${dinoOk ? '✅' : '🦖'} ${dinoOk ? 'Richtiger Dino' : 'Spiele ' + escapeHtml(a.dinoName || a.dino)}</span>`
-      + `<span class="q-chip ${growOk ? 'ok' : 'no'}">📈 ${fmtGrow(p.grow || 0)} / ${target}%</span>`
-      + `<span class="q-chip ${p.isPrime ? 'ok' : 'no'}">${p.isPrime ? '⭐' : '☆'} Prime</span>`;
-  }
-  return `<div class="q-progress" id="qProgress">${chips}</div>`;
-}
-function questStageHtml() {
-  const a = questState.active;
-  if (a) {
-    const lines = questLinesHtml(a).replace(/class="q-line"/g, 'class="q-line show"');
-    const target = Math.round((questState.growTarget || 0.8) * 100);
-    const reward = `<div style="font-size:12px;color:#fbbf24;font-weight:700;margin-top:6px">🏆 Belohnung: ${(questState.reward || 0).toLocaleString('de-DE')} Punkte</div>`;
-    if (a.status === 'rolled') {
-      return `<div style="font-size:12px;color:var(--accent-2);font-weight:700;margin-bottom:6px">DEINE QUEST</div>` + lines
-        + questProgressHtml() + reward
-        + `<div style="font-size:11px;color:var(--muted);margin-top:10px">Beim Start wird dein aktueller Dino <b>eingeparkt</b> und du startest als <b>${escapeHtml(a.dinoName || a.dino)}</b>-Juvi (25%). Ziel: <b>Prime + ${target}%</b>.<br>Du kannst auch direkt im Spiel starten: spawne einfach als <b>${escapeHtml(a.dinoName || a.dino)}</b> — die Quest startet dann automatisch.</div>`
-        + `<div style="display:flex;gap:8px;margin-top:12px"><button id="qStart" style="flex:1">🚀 Quest starten</button><button id="qAbandon" class="secondary" style="flex:none">Aufgeben</button></div>`;
-    }
-    if (a.status === 'failed') {
-      return `<div style="font-size:12px;color:#fca5a5;font-weight:700;margin-bottom:6px">QUEST FEHLGESCHLAGEN</div>` + lines
-        + questProgressHtml() + reward
-        + `<div style="display:flex;gap:8px;margin-top:12px"><button id="qStart" style="flex:1">🔄 Quest neu starten</button><button id="qAbandon" class="secondary" style="flex:none">Aufgeben</button></div>`;
-    }
-    // status === 'active' (gestartet)
-    return `<div style="font-size:12px;color:var(--accent-2);font-weight:700;margin-bottom:6px">AKTIVE QUEST · LÄUFT</div>` + lines
-      + questProgressHtml()
-      + `<div style="font-size:11px;color:var(--muted);margin-top:12px">Ziel: Mit <b>${escapeHtml(a.dinoName || a.dino)}</b> <b>Prime</b> + <b>${target}%</b> erreichen — Insta-Grow zählt nicht.</div>`
-      + reward
-      + `<button id="qAbandon" class="secondary" style="margin-top:12px">Quest aufgeben</button>`;
-  }
-  const left = (questState.dailyLimit || 2) - (questState.rollsToday || 0);
-  if (left <= 0) {
-    return `<div style="text-align:center;color:var(--muted);padding:20px 0">
-      <div style="font-size:32px">🌙</div>
-      <div style="margin-top:8px;font-weight:600">Tageslimit erreicht</div>
-      <div style="font-size:12px;margin-top:4px">Du hast deine ${questState.dailyLimit} Quests für heute verbraucht. Komm morgen wieder!</div></div>`;
-  }
-  return `<div style="text-align:center">
-    <div class="q-slot" style="font-size:40px">🎲</div>
-    <div style="color:var(--muted);font-size:13px;margin:8px 0 6px">Würfle eine RP-Challenge: ein Dino, ein Handicap, eine RP-Rolle und eine Kleinigkeit.</div>
-    <div style="color:#fbbf24;font-size:12px;font-weight:700;margin-bottom:14px">🏆 Belohnung bei Erfüllung: ${(questState.reward || 0).toLocaleString('de-DE')} Punkte</div>
-    <button id="qRoll" style="max-width:280px;margin:0 auto">🎲 Quest würfeln (${left}/${questState.dailyLimit} heute)</button>
-  </div>`;
-}
-function renderQuests() {
-  const panel = el('quests'); if (!panel) return;
-  panel.classList.add('q-wide');
-  panel.innerHTML = `<h2>📜 Quests</h2>
-    <div class="q-types">
-      <div class="q-type q-soon"><div class="q-ico">⚔️</div><div class="q-name">PVP</div><div class="q-sub">Kampf-Aufgaben</div><div class="q-soon-badge">coming soon</div></div>
-      <div class="q-type q-soon"><div class="q-ico">🧭</div><div class="q-name">Erkundung</div><div class="q-sub">Orte entdecken</div><div class="q-soon-badge">coming soon</div></div>
-      <div class="q-type q-active" id="qTypeRp"><div class="q-ico">🎭</div><div class="q-name">RP-Quests</div><div class="q-sub">${questState.doneCount || 0} erfüllt</div></div>
-    </div>
-    <div class="q-stage" id="qStage">${questStageHtml()}</div>`;
-  const roll = el('qRoll'); if (roll) roll.onclick = () => rollRpQuest();
-  const start = el('qStart'); if (start) start.onclick = () => startQuest(start);
-  const ab = el('qAbandon');
-  if (ab) {
-    let armed = false;
-    ab.onclick = () => {
-      if (!armed) { armed = true; ab.textContent = '⚠️ Wirklich aufgeben? (Roll verbraucht)'; setTimeout(() => { if (ab) { armed = false; ab.textContent = 'Quest aufgeben'; } }, 3000); return; }
-      abandonQuest();
-    };
-  }
-}
-async function rollRpQuest() {
-  if (questRolling) return;
-  if ((questState.rollsToday || 0) >= (questState.dailyLimit || 2)) { showToast('Tageslimit erreicht', 'error'); return; }
-  questRolling = true;
-  const stage = el('qStage');
-  if (stage) stage.innerHTML = `<div class="q-slot spin" id="qSlot">🎲</div><div style="text-align:center;color:var(--muted);margin-top:12px;font-size:12px">Würfle deine Challenge…</div>`;
-  const slot = el('qSlot');
-  const spin = setInterval(() => { if (slot) slot.textContent = QUEST_DINO_NAMES[Math.floor(Math.random() * QUEST_DINO_NAMES.length)]; }, 85);
-  const started = Date.now();
-  let result = null, err = null;
-  try {
-    const r = await fetch(`${config.tokenBase}/me/quest/roll`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'rp' }) });
-    const d = await r.json();
-    if (!r.ok) err = apiErr(d); else result = d;
-  } catch { err = 'Verbindungsfehler'; }
-  const wait = Math.max(0, 1700 - (Date.now() - started));
-  setTimeout(() => {
-    clearInterval(spin);
-    questRolling = false;
-    if (err) { showToast(err, 'error'); loadQuest(); return; }
-    questState.active = result.active; questState.rollsToday = result.rollsToday; questState.dailyLimit = result.dailyLimit;
-    revealQuest(result.active);
-  }, wait);
-}
-function revealQuest(a) {
-  const stage = el('qStage'); if (!stage) { renderQuests(); return; }
-  stage.innerHTML = `<div style="font-size:12px;color:var(--accent-2);font-weight:700;margin-bottom:6px">DEINE NEUE QUEST</div>` + questLinesHtml(a);
-  const lines = stage.querySelectorAll('.q-line');
-  lines.forEach((ln, i) => setTimeout(() => ln.classList.add('show'), 140 * i));
-  showToast('🎉 Neue RP-Quest gewürfelt!', 'success');
-  setTimeout(() => { if (featureOpen === 'quests') renderQuests(); }, 140 * lines.length + 500);
-}
-async function startQuest(btn) {
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Wird gestartet…'; }
-  try {
-    const r = await fetch(`${config.tokenBase}/me/quest/start`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
-    const d = await r.json();
-    if (!r.ok) { showToast(apiErr(d, 'Start fehlgeschlagen'), 'error'); if (btn) { btn.disabled = false; renderQuests(); } return; }
-    questState.active = d.active;
-    showToast(d.notice || '🚀 Quest gestartet! Wachse als Quest-Dino auf Prime + 80%.', 'success');
-    renderQuests();
-  } catch { showToast('Verbindungsfehler', 'error'); if (btn) btn.disabled = false; }
-}
-async function abandonQuest() {
-  try {
-    const r = await fetch(`${config.tokenBase}/me/quest/abandon`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}` } });
-    const d = await r.json();
-    if (r.ok) { questState.active = null; questState.rollsToday = d.rollsToday; showToast('Quest aufgegeben', ''); renderQuests(); }
-  } catch {}
 }
 
 // ── Dino-Lexikon (statischer Content, von Hideki/Team pflegbar) ───────────────
@@ -7163,7 +6990,6 @@ const DOCK_ICONS = {
   admin:    dockSvg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>'),
   server:   dockSvg('<rect x="2" y="3" width="20" height="6" rx="1"/><rect x="2" y="12" width="20" height="6" rx="1"/><path d="M6 6h.01M6 15h.01"/>'),
   srvctl:   dockSvg('<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>'),
-  quests:   dockSvg('<path d="M4 22V4a1 1 0 0 1 1-1h12l-2 4 2 4H6"/><line x1="4" y1="22" x2="4" y2="15"/>'),
   leaderboard: dockSvg('<circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/>'),
   notifications: dockSvg('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'),
   close:    dockSvg('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'),
@@ -7749,7 +7575,7 @@ async function aiSpawnAt(x, y) {
 
 // ── Edit-Mode: Panels verschiebbar machen (Positionen in localStorage) ──────
 // resize:true → zusätzlich skalierbar. Sonst nur verschiebbar (einheitliches Verhalten).
-// HUD-Pille (oben mittig), Quest & Große Karte sind bewusst NICHT enthalten = nicht verschiebbar.
+// HUD-Pille (oben mittig) & Große Karte sind bewusst NICHT enthalten = nicht verschiebbar.
 // resize: 'mini'|'scale'|true (true = Breite/Höhe). noMove: true → nur skalierbar, nicht verschiebbar.
 // Große Karte (bigMap) ist bewusst NICHT enthalten = weder verschiebbar noch skalierbar.
 const MOVABLE = [
@@ -7771,7 +7597,6 @@ const MOVABLE = [
   { id: 'group',       label: 'Gruppe (F2)', resize: true },
   { id: 'profile',     label: 'Profil (F1)', resize: true },
   { id: 'lexikon',     label: 'Dino-Lexikon', resize: true },
-  { id: 'quests',      label: 'Quests', resize: true },  // verschiebbar + skalierbar
 ];
 let editMode = false;
 function loadPositions() { try { return JSON.parse(localStorage.getItem('bf-layout')) || {}; } catch { return {}; } }

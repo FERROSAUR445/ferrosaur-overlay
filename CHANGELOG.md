@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.45 — Quest-System entfernt
+
+### 🔧 Sonstiges
+
+- Das Quest-System ist aus dem Overlay entfernt: Dock-Button, Quest-Fenster
+  und die Quest-Zeile im Profil. Der Server verfolgt Quests nicht mehr.
+
 ## v1.11.44 — Server-Name und Token-Markt auf Discord
 
 ### ✨ Neu
