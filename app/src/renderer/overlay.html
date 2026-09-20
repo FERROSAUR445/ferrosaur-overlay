@@ -227,8 +227,13 @@
           </select>
           <button id="zoneNewBtn" style="width:auto;padding:8px 10px;border-radius:6px;border:0;background:var(--accent);color:#fff;font-weight:600;cursor:pointer">＋ Neue Zone</button>
         </div>
-        <div id="zoneList" style="max-height:180px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:4px"></div>
+        <input id="zoneFilter" placeholder="🔎 Zonen suchen…" style="width:100%;box-sizing:border-box;padding:7px;margin-bottom:6px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:#eee;font-size:12px">
+        <div id="zoneList" style="max-height:220px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:4px"></div>
         <input id="zoneName" placeholder="Name (optional)" style="width:100%;box-sizing:border-box;padding:7px;margin-bottom:8px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:#eee;font-size:12px">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px"><span style="color:var(--muted);flex:none">Typ dieser Zone</span>
+          <select id="zoneChangeType" style="flex:1;padding:7px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:#eee;cursor:pointer">
+            <option value="pvp">PvP</option><option value="pve">PvE</option><option value="sanctuary">Sanctuary</option><option value="patrol">Patrol</option><option value="migration">Migration</option><option value="patenzone">Patenzone</option><option value="event">Event</option>
+          </select></div>
         <div style="color:var(--muted);margin-bottom:4px">🍼 Wachstums-Zwang (optional) — wer außerhalb steht, bekommt eine Warnung</div>
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
           <input id="zoneGrowMin" type="number" min="0" max="100" placeholder="Min %" style="width:0;flex:1;box-sizing:border-box;padding:7px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:#eee;font-size:12px">
@@ -241,6 +246,11 @@
           <button id="zoneUndoBtn" style="width:auto;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer">↶</button>
           <button id="zoneClearBtn" style="width:auto;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer">🗑</button>
         </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button id="zoneMapEditBtn" style="flex:1;padding:8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#eee;cursor:pointer" title="Klick auf die Karte setzt einen neuen Eckpunkt">🖱️ Punkte per Klick</button>
+          <button id="zoneCopyBtn" style="flex:none;width:auto;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#eee;cursor:pointer" title="Gewählte Zone kopieren">📋 Kopieren</button>
+        </div>
+        <div style="color:var(--muted);margin-top:6px;line-height:1.4;font-size:11px">Auf der Karte: Ecke (■) ziehen · grünes ＋ auf einer Kante ziehen = neue Ecke · Shift + Ziehen = ganze Zone verschieben · Rechtsklick auf Ecke = löschen</div>
         <button id="zonePullBtn" style="width:100%;margin-top:8px;padding:8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:#eee;cursor:pointer" title="Von anderen gespeicherte Zonen dazuholen, ohne deine ungespeicherten zu verlieren">🔄 Aktuelle Zonen laden</button>
         <button id="zoneSaveBtn" style="width:100%;margin-top:6px;padding:9px;border-radius:6px;border:0;background:#22c55e;color:#fff;font-weight:600;cursor:pointer">💾 Speichern (für alle)</button>
       </div>

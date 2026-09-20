@@ -1,5 +1,5 @@
 ﻿import { Room, RoomEvent, Track, ParticipantEvent, AudioPresets } from 'livekit-client';
-import { loadMapImage, drawFullMap, drawMinimap, drawHeatmap, normToWorld, worldToNorm, zoneAt, zonesAt, resetCal, solveAffine, getCal, setCalAffine, setZones, newZone, ZONES, ZONE_TYPES, ZONE_META, loadZoneLayer, setZoneLayer, isZoneLayerVisible, setGoldenZone, goldenZoneCenter, groupColorFor, setMarkerStyle, drawAiEncounters } from './map.js';
+import { loadMapImage, drawFullMap, drawMinimap, drawHeatmap, normToWorld, worldToNorm, zoneAt, zonesAt, resetCal, solveAffine, getCal, setCalAffine, setZones, newZone, ZONES, ZONE_TYPES, ZONE_META, loadZoneLayer, setZoneLayer, isZoneLayerVisible, setGoldenZone, goldenZoneCenter, groupColorFor, setMarkerStyle, drawAiEncounters, zoneMidpoints } from './map.js';
 import { THEMES, makeTheme, aboIndex } from './shared/theme.js';
 import { el, apiErr, makeApi, makeApiAction, armConfirm } from './shared/core.js';
 import { baseClass, fmtGrow, escapeHtml, fmtTod } from './shared/format.js';
@@ -240,6 +240,9 @@ let isIngame = false;    // Owner/Admin/Moderator — Ingame-Tools (Admin-Panel)
 let isTeam = false;      // Owner/Admin/Support
 let isStaff = false;     // isIngame || isTeam → sieht Support-Tools (Dino-Token etc.)
 let zoneEditMode = false;
+let zoneGeomDrag = null;   // Zonen-Bearbeitung auf der Karte: { kind: 'vertex'|'zone', index, from, orig }
+let zoneClickAdd = false;  // Klick auf die Karte setzt einen neuen Eckpunkt
+let zoneFilterText = '';
 let activeZoneId = null; // id der aktuell gewählten Zone (Editor)
 let zonesDirty = false;  // ungespeicherte lokale Zonen-Änderungen → Auto-Refresh pausiert
 let pttHeld = false, ptmHeld = false;
@@ -882,6 +885,10 @@ async function init() {
   el('zoneAddBtn').onclick = () => captureZonePoint();
   el('zoneUndoBtn').onclick = () => { const z = getActiveZone(); if (z) { z.points.pop(); zonesDirty = true; updateZoneInfo(); renderZoneList(); renderBigMap(); } };
   el('zoneClearBtn').onclick = () => { const z = getActiveZone(); if (z) { z.points = []; zonesDirty = true; updateZoneInfo(); renderZoneList(); renderBigMap(); } };
+  el('zoneFilter').oninput = () => { zoneFilterText = el('zoneFilter').value.trim().toLowerCase(); renderZoneList(); };
+  el('zoneChangeType').onchange = () => { const z = getActiveZone(); if (z) { z.type = el('zoneChangeType').value; zonesDirty = true; renderZoneList(); updateZoneInfo(); if (mapOpen) renderBigMap(); } };
+  el('zoneMapEditBtn').onclick = () => setZoneClickAdd(!zoneClickAdd);
+  el('zoneCopyBtn').onclick = () => copyActiveZone();
   el('zoneName').oninput = () => { const z = getActiveZone(); if (z) { z.name = el('zoneName').value; zonesDirty = true; renderZoneList(); if (mapOpen) renderBigMap(); } };
   el('zoneGrowMin').oninput = () => { const z = getActiveZone(); if (z) { z.growMin = readZoneGrowInput('zoneGrowMin'); zonesDirty = true; updateZoneInfo(); } };
   el('zoneGrowMax').oninput = () => { const z = getActiveZone(); if (z) { z.growMax = readZoneGrowInput('zoneGrowMax'); zonesDirty = true; updateZoneInfo(); } };
@@ -969,7 +976,8 @@ async function init() {
   cv.addEventListener('wheel', onMapWheel, { passive: false });
   cv.addEventListener('mousedown', onMapMouseDown);
   window.addEventListener('mousemove', onMapMouseMove);
-  window.addEventListener('mouseup', () => { dragging = false; });
+  window.addEventListener('mouseup', () => { dragging = false; endZoneMapDrag(); });
+  cv.addEventListener('contextmenu', onMapContext);
   cv.addEventListener('mousemove', tpHoverHitTest);
   cv.addEventListener('mouseleave', () => setHoveredTp(null));
   // Dock (Overlay-Modus / Alt)
@@ -1805,7 +1813,7 @@ function renderBigMap() {
   ctx.setTransform(mapZoom, 0, 0, mapZoom, mapPanX, mapPanY);
   const view = { ctx, w: cv.width, h: cv.height };
   if (heatmapMode) drawHeatmap(view, players, me);
-  else drawFullMap(view, players, waypoints, teleports, hoveredTp, 1 / mapZoom);
+  else drawFullMap(view, players, waypoints, teleports, hoveredTp, 1 / mapZoom, { editZone: editingZoneOnMap(), editHandle: zoneGeomDrag ? zoneGeomDrag.index : -1 });
   if (!heatmapMode && isTeam && aiLayerOn) drawAiEncounters(ctx, cv.width, cv.height, 1 / mapZoom, aiEncounters, baseClass);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (calibMode) drawCalibOverlay(ctx, cv.width, cv.height);
@@ -1888,6 +1896,12 @@ function onMapClick(e) {
   }
   const w = normToWorld(nx, ny);
 
+  // Zonen-Editor: Klick setzt einen neuen Eckpunkt der gewählten Zone
+  if (zoneClickAdd) {
+    const zc = editingZoneOnMap();
+    if (zc) { zc.points.push({ x: w.x, y: w.y }); zonesDirty = true; updateZoneInfo(); renderZoneList(); renderBigMap(); return; }
+  }
+
   // AI-Dino-Spawn-Modus (nur Team): Klick = Spawn-Position
   if (aiSpawnMode && tpIsAdmin) {
     aiSpawnAt(w.x, w.y);
@@ -1935,10 +1949,12 @@ function onMapWheel(e) {
 
 
 function onMapMouseDown(e) {
+  if (startZoneMapDrag(e)) { dragging = false; dragMoved = true; e.preventDefault(); return; }   // Zonen-Anfasser hat Vorrang vor dem Verschieben der Karte
   dragging = true; dragMoved = false;
   lastDragX = e.clientX; lastDragY = e.clientY;
 }
 function onMapMouseMove(e) {
+  if (zoneGeomDrag) { moveZoneMapDrag(e); return; }
   if (!dragging) return;
   const cv = el('bigMapCanvas');
   const rect = cv.getBoundingClientRect();
@@ -3923,11 +3939,107 @@ function toggleZonePanel(force) {
   zoneEditMode = force !== undefined ? force : !zoneEditMode;
   el('zonePanel').style.display = zoneEditMode ? 'block' : 'none';
   el('zoneBtn').style.background = zoneEditMode ? 'var(--accent)' : 'var(--panel)';
+  if (!zoneEditMode) setZoneClickAdd(false);
+  if (mapOpen) renderBigMap();
   if (zoneEditMode) { renderZoneList(); syncZoneName(); updateZoneInfo(); }
 }
 
 function getActiveZone() {
   return ZONES.find((z) => z.id === activeZoneId) || null;
+}
+
+// ── Zonen direkt auf der großen Karte bearbeiten ─────────────────────────────
+// Ecke ziehen · Kantenmitte (grünes +) ziehen = neue Ecke · Shift+Ziehen = ganze Zone · Rechtsklick = Ecke löschen
+// · "Punkte per Klick" = jeder Klick hängt eine Ecke an. Änderungen sind lokal, bis "Speichern (für alle)".
+function editingZoneOnMap() {
+  if (!zoneEditMode || !mapOpen || calibMode || autoCalib || aiSpawnMode || encWpMode) return null;
+  return getActiveZone();
+}
+function mapCanvasPt(e) {
+  const cv = el('bigMapCanvas'), rect = cv.getBoundingClientRect();
+  return { x: ((e.clientX - rect.left) / rect.width) * cv.width, y: ((e.clientY - rect.top) / rect.height) * cv.height };
+}
+function canvasToWorld(c) {
+  const cv = el('bigMapCanvas');
+  return normToWorld((c.x - mapPanX) / mapZoom / cv.width, (c.y - mapPanY) / mapZoom / cv.height);
+}
+function worldToCanvas(p) {
+  const cv = el('bigMapCanvas'), n = worldToNorm(p.x, p.y);
+  return { x: n.nx * cv.width * mapZoom + mapPanX, y: n.ny * cv.height * mapZoom + mapPanY };
+}
+function zoneHandleAt(points, c) {
+  let best = -1, bestD = 13;
+  (points || []).forEach((p, i) => { const s = worldToCanvas(p); const d = Math.hypot(s.x - c.x, s.y - c.y); if (d < bestD) { best = i; bestD = d; } });
+  return best;
+}
+function pointInPoly(x, y, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+function startZoneMapDrag(e) {
+  const z = editingZoneOnMap();
+  if (!z || e.button !== 0) return false;
+  const c = mapCanvasPt(e);
+  const vi = zoneHandleAt(z.points, c);
+  if (vi >= 0) { zoneGeomDrag = { kind: 'vertex', index: vi }; return true; }
+  const mi = zoneHandleAt(zoneMidpoints(z.points), c);
+  if (mi >= 0) {
+    const w = canvasToWorld(c);
+    z.points.splice(mi + 1, 0, { x: w.x, y: w.y });
+    zoneGeomDrag = { kind: 'vertex', index: mi + 1 }; zonesDirty = true;
+    return true;
+  }
+  if (e.shiftKey && z.points.length >= 3) {
+    const w = canvasToWorld(c);
+    if (pointInPoly(w.x, w.y, z.points)) { zoneGeomDrag = { kind: 'zone', from: w, orig: z.points.map((p) => ({ x: p.x, y: p.y })) }; return true; }
+  }
+  return false;
+}
+function moveZoneMapDrag(e) {
+  const z = getActiveZone();
+  if (!z || !zoneGeomDrag) return;
+  const w = canvasToWorld(mapCanvasPt(e));
+  if (zoneGeomDrag.kind === 'vertex') z.points[zoneGeomDrag.index] = { x: w.x, y: w.y };
+  else { const dx = w.x - zoneGeomDrag.from.x, dy = w.y - zoneGeomDrag.from.y; z.points = zoneGeomDrag.orig.map((p) => ({ x: p.x + dx, y: p.y + dy })); }
+  zonesDirty = true; dragMoved = true;
+  renderBigMap();
+}
+function endZoneMapDrag() {
+  if (!zoneGeomDrag) return;
+  zoneGeomDrag = null;
+  updateZoneInfo(); renderZoneList(); renderBigMap();
+}
+function onMapContext(e) {
+  const z = editingZoneOnMap();
+  if (!z) return;
+  const vi = zoneHandleAt(z.points, mapCanvasPt(e));
+  if (vi < 0) return;
+  e.preventDefault();
+  if (z.points.length === 3) { showToast('Eine Zone braucht mindestens 3 Eckpunkte.', 'error'); return; }
+  z.points.splice(vi, 1);
+  zonesDirty = true; updateZoneInfo(); renderZoneList(); renderBigMap();
+}
+function setZoneClickAdd(on) {
+  zoneClickAdd = !!on;
+  const b = el('zoneMapEditBtn');
+  if (b) { b.style.background = zoneClickAdd ? 'var(--accent)' : 'transparent'; b.style.color = zoneClickAdd ? '#fff' : '#eee'; }
+  if (zoneClickAdd && !getActiveZone()) showToast('Erst eine Zone wählen oder „Neue Zone" anlegen.', 'error');
+}
+function copyActiveZone() {
+  const z = getActiveZone();
+  if (!z) { showToast('Erst eine Zone wählen.', 'error'); return; }
+  const c = newZone(z.type);
+  c.name = z.name ? z.name + ' (Kopie)' : '';
+  c.points = z.points.map((p) => ({ x: p.x + 800, y: p.y + 800 }));
+  c.growMin = typeof z.growMin === 'number' ? z.growMin : null;
+  c.growMax = typeof z.growMax === 'number' ? z.growMax : null;
+  activeZoneId = c.id; zonesDirty = true;
+  syncZoneName(); renderZoneList(); updateZoneInfo();
+  if (mapOpen) renderBigMap();
 }
 
 function selectZone(id) {
@@ -3943,6 +4055,7 @@ function syncZoneName() {
   el('zoneName').value = z ? (z.name || '') : '';
   el('zoneGrowMin').value = (z && typeof z.growMin === 'number') ? Math.round(z.growMin * 100) : '';
   el('zoneGrowMax').value = (z && typeof z.growMax === 'number') ? Math.round(z.growMax * 100) : '';
+  { const ts = el('zoneChangeType'); if (ts) { ts.disabled = !z; if (z) ts.value = z.type; } }
 }
 
 function createZone(type) {
@@ -3975,8 +4088,9 @@ function renderZoneList() {
   }
   // nach Typ-Reihenfolge sortiert anzeigen
   const order = (t) => { const i = ZONE_TYPES.indexOf(t); return i < 0 ? 99 : i; };
-  const sorted = ZONES.slice().sort((a, b) => order(a.type) - order(b.type));
+  const sorted = ZONES.slice().filter((z) => !zoneFilterText || (z.name || (ZONE_META[z.type] || ZONE_META.pvp).label).toLowerCase().includes(zoneFilterText) || z.type.includes(zoneFilterText)).sort((a, b) => order(a.type) - order(b.type));
   wrap.innerHTML = '';
+  if (!sorted.length) { wrap.innerHTML = '<div style="color:var(--muted);padding:4px 2px">Keine passende Zone.</div>'; return; }
   for (const z of sorted) {
     const meta = ZONE_META[z.type] || ZONE_META.pvp;
     const active = z.id === activeZoneId;
@@ -3990,7 +4104,7 @@ function renderZoneList() {
     const cnt = document.createElement('span');
     cnt.style.cssText = 'flex:0 0 auto;color:var(--muted);font-size:11px';
     const hasGrow = typeof z.growMin === 'number' || typeof z.growMax === 'number';
-    cnt.textContent = `${hasGrow ? '🍼 ' : ''}${z.points.length}P`;
+    cnt.textContent = `${hasGrow ? '🍼 ' : ''}${meta.label} · ${z.points.length}P`;
     const del = document.createElement('span');
     del.style.cssText = 'flex:0 0 auto;color:var(--muted);cursor:pointer;padding:0 2px';
     del.textContent = '✕';

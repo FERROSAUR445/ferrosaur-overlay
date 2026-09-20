@@ -703,8 +703,12 @@ export function drawZoneEdit(ctx, w, h, scale, zone, activeHandle) {
     const n = worldToNorm(p.x, p.y);
     return { x: n.nx * w, y: n.ny * h };
   });
-  if (pts.length < 2) return;
   const color = (ZONE_META[zone.type] || ZONE_META.pvp).color;
+  if (pts.length < 2) {   // erste Ecke sichtbar machen, solange es noch keine Linie gibt
+    const s1 = 6 * scale;
+    pts.forEach((p) => { ctx.fillStyle = '#fff'; ctx.fillRect(p.x - s1, p.y - s1, s1 * 2, s1 * 2); ctx.lineWidth = 2 * scale; ctx.strokeStyle = '#000'; ctx.strokeRect(p.x - s1, p.y - s1, s1 * 2, s1 * 2); });
+    return;
+  }
 
   ctx.beginPath();
   pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));

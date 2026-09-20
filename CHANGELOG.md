@@ -7,6 +7,27 @@
 
 ## [Unreleased]
 
+## v1.11.49 — Zonen komplett bearbeiten
+
+### ✨ Neu
+
+- Zonen lassen sich jetzt direkt auf der großen Karte bearbeiten (Admin,
+  über „📐 Zonen"): Eckpunkte ziehen, auf ein grünes ＋ an einer Kante
+  ziehen für eine neue Ecke, Shift + Ziehen verschiebt die ganze Zone,
+  Rechtsklick auf eine Ecke löscht sie. „🖱️ Punkte per Klick" setzt
+  neue Ecken per Mausklick, ohne im Spiel herumzufliegen.
+- Der Typ einer vorhandenen Zone ist änderbar (PvP, PvE, Sanctuary, Patrol,
+  Migration, Patenzone, Event). Zonen lassen sich kopieren und in der Liste
+  suchen; die Liste zeigt jetzt Typ und Punktzahl.
+- Die erste gesetzte Ecke einer neuen Zone ist sofort sichtbar.
+
+### 🐛 Fehlerbehoben
+
+- Prime-Fortschritt: Die drei automatisch erfüllten Bedingungen (nie
+  unfruchtbar, keine Muskelkrämpfe, Spezies-Bonus) zählen jetzt als erfüllt.
+  Sanctuary, Migrations- und Patrol-Zonen werden mit den neuen Zonendaten
+  erkannt.
+
 ## v1.11.48 — Zonen auf der Karte gut sichtbar
 
 ### ✨ Neu
