@@ -7,6 +7,17 @@
 
 ## [Unreleased]
 
+## v1.11.48 — Zonen auf der Karte gut sichtbar
+
+### ✨ Neu
+
+- Sanctuary-, Patrol- und Migrations-Zonen werden auf der Karte jetzt mit
+  zarter Farbfüllung gezeichnet, nicht nur als dünner Umriss. Auf der
+  großen Karte stehen bei Sanctuary- und Migrations-Zonen die Namen dabei.
+- Die Zonen ersetzen die bisherigen Platzhalter und sind auf die
+  Spielkarte kalibriert (Positionen auf Karte und Minimap stimmen damit
+  genauer).
+
 ## v1.11.47 — Skin-Fenster verschiebbar
 
 ### ✨ Neu

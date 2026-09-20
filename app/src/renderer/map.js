@@ -210,7 +210,7 @@ export function drawFullMap(view, players, waypoints = [], teleports = [], hover
   if (mapReady) ctx.drawImage(mapImg, 0, 0, w, h);
   else { ctx.fillStyle = '#15102a'; ctx.fillRect(0, 0, w, h); ctx.fillStyle = '#6b5b8c'; ctx.font = '16px system-ui'; ctx.textAlign = 'center'; ctx.fillText('Kartenbild fehlt (assets/map.jpg)', w/2, h/2); }
 
-  drawZones(ctx, (nx, ny) => ({ px: nx * w, py: ny * h }), iconScale, opts.editZone ? opts.editZone.id : null);
+  drawZones(ctx, (nx, ny) => ({ px: nx * w, py: ny * h }), iconScale, opts.editZone ? opts.editZone.id : null, true);
   for (const wp of waypoints) {
     const { nx, ny } = worldToNorm(wp.x, wp.y);
     drawWaypoint(ctx, nx * w, ny * h, iconScale);
@@ -437,7 +437,7 @@ export function drawMinimap(view, players, me, speakRange = 0, waypoints = [], z
 // Bildschirmbreite behalten. Default 1 haelt bestehende Aufrufer (Minimap)
 // unveraendert; im Overlay ist iconScale bei Standardzoom ebenfalls 1, dort
 // aendert sich die Darstellung also erst beim Reinzoomen — und dann zum Guten.
-function drawZones(ctx, project, scale = 1, skipId = null) {
+function drawZones(ctx, project, scale = 1, skipId = null, labels = false) {
   for (const z of ZONES) {
     if (!z.points || !z.points.length) continue;
     // Die gerade bearbeitete Zone zeichnet drawZoneEdit — sonst stuenden der
@@ -478,8 +478,17 @@ function drawZones(ctx, project, scale = 1, skipId = null) {
       ctx.font = `bold ${16 * scale}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('⭐', cx, cy);
     } else if (outline) {
-      // Sanctuary/Patrol/Migration: NUR Umriss — keine Füllung, KEIN Name-Label.
+      // Sanctuary/Patrol/Migration: Umriss + zarte Füllung (gut sichtbar); Namen nur auf der großen Karte
+      // und nur für Sanctuary/Migration (bei ~50 Patrol-Zonen wäre das unlesbar).
+      ctx.fillStyle = color + '2e'; ctx.fill();
       ctx.strokeStyle = color; ctx.lineWidth = 2 * scale; ctx.stroke();
+      if (labels && z.name && (z.type === 'sanctuary' || z.type === 'migration')) {
+        const cx = pts.reduce((a, p) => a + p.px, 0) / pts.length;
+        const cy = pts.reduce((a, p) => a + p.py, 0) / pts.length;
+        ctx.font = `bold ${11 * scale}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.lineWidth = 3 * scale; ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.strokeText(z.name, cx, cy);
+        ctx.fillStyle = '#fff'; ctx.fillText(z.name, cx, cy);
+      }
     } else {
       // PvP/PvE: Füllung + Umriss + Label (wie gehabt).
       ctx.fillStyle = color + '22';
