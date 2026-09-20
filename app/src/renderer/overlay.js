@@ -2818,6 +2818,56 @@ async function srvRenderOverview() {
   srvRenderTiles(health, pub);
   srvRenderHealth(health);
   srvRenderSpark();
+  srvRenderBotBox();
+}
+// ── 🤖 Discord-Status-Bot: Token + Kanal eintragen, Backend hält die Status-Nachricht aktuell ──
+// Das Formular wird EINMAL gebaut (der 8-s-Poll überschreibt sonst Eingaben); danach nur die Infozeile.
+async function srvRenderBotBox() {
+  const box = el('srvBotBox'); if (!box) return;
+  let cfg = null;
+  try { cfg = await svApi('GET', '/admin/status-bot'); } catch { return; }
+  const info = () => {
+    const i = el('sbInfo'); if (!i) return;
+    const parts = [cfg.hasToken ? '🔑 Token gespeichert' : '🔑 kein Token'];
+    if (cfg.lastOkAt) parts.push('✅ zuletzt gesendet ' + new Date(cfg.lastOkAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
+    i.innerHTML = escapeHtml(parts.join(' · ')) + (cfg.lastError ? `<br><span style="color:#f87171">⚠️ ${escapeHtml(cfg.lastError)}</span>` : '');
+    const t = el('sbToken'); if (t) t.placeholder = cfg.hasToken ? '•••••• gespeichert (leer lassen = unverändert)' : 'Bot-Token einfügen';
+  };
+  if (el('sbForm')) { info(); return; }
+  box.innerHTML = `<div class="dt-sec" style="margin-top:14px">🤖 Discord Status-Bot</div>
+    <div class="dt-form" id="sbForm">
+      <div class="dt-muted" style="margin-bottom:8px">Der Bot hält eine Nachricht mit dem Server-Status (online, Spieler) in einem Discord-Kanal aktuell. Bot im Discord Developer Portal anlegen, auf deinen Server einladen (Rechte: Nachrichten senden, Links einbetten) und die Kanal-ID kopieren.</div>
+      <input id="sbToken" type="password" autocomplete="off" class="tm-input" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+      <input id="sbChannel" class="tm-input" placeholder="Kanal-ID" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+      <div style="display:flex;gap:8px;align-items:center;font-size:13px;margin-bottom:6px">Aktualisieren alle <input id="sbInterval" type="number" min="1" max="60" class="tm-input" style="width:70px"> Min</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none"><input id="sbEnabled" type="checkbox" style="width:auto;cursor:pointer"> Bot aktiv</label>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button id="sbSave" style="flex:1">💾 Speichern</button>
+        <button id="sbTest" class="secondary" style="flex:1">📨 Test senden</button>
+        <button id="sbClear" class="secondary" style="flex:none;width:auto;padding:6px 10px">🗑️ Token</button>
+      </div>
+      <div id="sbInfo" class="dt-muted" style="margin-top:6px"></div>
+    </div>`;
+  el('sbChannel').value = cfg.channelId || '';
+  el('sbInterval').value = cfg.intervalMin || 5;
+  el('sbEnabled').checked = !!cfg.enabled;
+  info();
+  const apply = (d) => { cfg = d; el('sbToken').value = ''; info(); };
+  el('sbSave').onclick = async () => {
+    try {
+      const d = await svApi('POST', '/admin/status-bot', { token: el('sbToken').value.trim(), channelId: el('sbChannel').value.trim(), intervalMin: parseInt(el('sbInterval').value, 10) || 5, enabled: el('sbEnabled').checked });
+      apply(d); el('sbEnabled').checked = !!d.enabled;
+      showToast(d.lastError ? '⚠️ Gespeichert, aber: ' + d.lastError : (d.enabled ? '🤖 Status-Bot aktiv' : '💾 Gespeichert'), d.lastError ? 'error' : 'success');
+    } catch (e) { showToast(e.message, 'error'); }
+  };
+  el('sbTest').onclick = async () => {
+    try { const d = await svApi('POST', '/admin/status-bot/test', {}); apply(d); showToast('📨 Status-Nachricht gesendet', 'success'); }
+    catch (e) { showToast(e.message, 'error'); srvRenderBotBox(); }
+  };
+  el('sbClear').onclick = () => svArmConfirm(el('sbClear'), 'Sicher? Token löschen', async () => {
+    try { const d = await svApi('POST', '/admin/status-bot', { clearToken: true, channelId: el('sbChannel').value.trim(), intervalMin: parseInt(el('sbInterval').value, 10) || 5, enabled: false }); apply(d); el('sbEnabled').checked = false; showToast('🗑️ Token gelöscht, Bot aus', 'success'); }
+    catch (e) { showToast(e.message, 'error'); }
+  });
 }
 function srvChk(health, id) { return ((health && health.checks) || []).find((c) => c.id === id) || null; }
 // Farbe für eine Health-Prüfung: rot (down) / gelb (warn) / grün (ok).

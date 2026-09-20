@@ -7,6 +7,16 @@
 
 ## [Unreleased]
 
+## v1.11.43 — Discord Status-Bot
+
+### ✨ Neu
+
+- Im Server-Panel (Übersicht) gibt es den neuen Block „Discord Status-Bot".
+  Admins tragen dort Bot-Token, Kanal-ID und Intervall ein. Der Bot hält
+  danach eine Nachricht mit Server-Status (online/offline) und Spielerzahl
+  im Discord-Kanal aktuell. Der Token wird nur auf dem Server gespeichert
+  und nie ans Overlay zurückgeschickt.
+
 ## v1.11.42 — Nieten in der Lootbox
 
 ### ✨ Neu
