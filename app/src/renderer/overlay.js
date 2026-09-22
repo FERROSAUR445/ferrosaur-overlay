@@ -5339,7 +5339,14 @@ async function entombMyDino() {
       method: 'POST', headers: { Authorization: `Bearer ${sessionToken}` },
     });
     const d = await res.json(); if (!res.ok) throw new Error(apiErr(d));
-    showToast('⚰️ Dein Dino wird entombt.', 'success');
+    showToast('⚰️ Entombt — Wachstum zurückgesetzt.', 'success');
+    updateDinoInfo();   // Elder-Stufe/4. Mutationsslot kommt vom Server erst mit dem nächsten /me — sofort neu laden
+    setTimeout(async () => {
+      try {
+        const me = await (await fetch(`${config.tokenBase}/me`, { headers: { Authorization: `Bearer ${sessionToken}` } })).json();
+        if (me.isElder) showToast(`🪦 Elder-Stufe ${me.elderStacks}/3${me.elderStacks >= 2 ? ' — neue Mutationsslots freigeschaltet' : ''}`, 'success');
+      } catch {}
+    }, 1500);
   } catch (e) { showToast(e.message || 'Entomben fehlgeschlagen', 'error'); }
 }
 
@@ -6613,6 +6620,7 @@ function renderDtMut() {
   }).join('');
   box.innerHTML = `
     <div class="dt-sec">🧬 Mutationen <span style="font-weight:400;color:var(--muted)">— ${counts}</span></div>
+    <div style="font-size:11px;color:#f59e0b;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);border-radius:8px;padding:7px 9px;margin-bottom:8px">⚠️ Wird nur gespeichert, nicht live auf den Dino übertragen — das Spiel-Mod kann Mutationen nicht sicher setzen (Absturzrisiko). Der Spieler sieht diese Mutationen erst, wenn er selbst neu würfelt/mutiert.</div>
     <input id="dtMutSearch" class="tm-input" placeholder="🔎 Mutation suchen…" autocomplete="off" style="margin-bottom:6px">
     <div class="dt-mlist">${rows || '<div class="dt-muted" style="padding:8px">Keine Mutationen für diese Auswahl.</div>'}</div>
     <div class="dt-muted" style="font-size:10.5px;margin-top:4px">B = Base (4 bei Prime ≥5, sonst 3) · P = Parent (ab 1× Elder-Stack) · E = Elder (ab 2×, 8 bei 3×) · ★ = selten. Jede Mutation zählt in nur eine Generation.</div>`;
@@ -7572,6 +7580,12 @@ async function connect({ token, url }) {
   // Gewählte Audio-Geräte anwenden (falls gesetzt)
   try { if (micDeviceId) await room.switchActiveDevice('audioinput', micDeviceId); } catch {}
   try { if (spkDeviceId) await room.switchActiveDevice('audiooutput', spkDeviceId); } catch {}
+  // Mikro vorwaermen (Track anlegen + sofort stummschalten): setMicrophoneEnabled() legt den Track NUR beim
+  // allerersten Aktivieren an (getUserMedia + SFU-Publish, spuerbar langsam) - genau das ist die 'Push-to-
+  // Talk braucht ewig'-Verzoegerung beim ersten Tastendruck nach jedem Connect. Ab hier ist der Track schon
+  // da, jedes weitere (Un-)Muten ist eine reine Mute-Nachricht, keine Neuverhandlung mehr.
+  try { await room.localParticipant.setMicrophoneEnabled(true); await room.localParticipant.setMicrophoneEnabled(false); }
+  catch (e) { console.error('[voice] Mikro-Vorwaermen fehlgeschlagen:', e); }
   // Sprech-Erkennung des eigenen Mikros
   room.localParticipant.on(ParticipantEvent.IsSpeakingChanged, () => refreshMicState());
 }

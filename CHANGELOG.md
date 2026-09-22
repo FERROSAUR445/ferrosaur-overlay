@@ -7,6 +7,26 @@
 
 ## [Unreleased]
 
+## v1.11.52 — Push-to-Talk, Entomb-Rückmeldung, Admin-Mutationen
+
+### 🐛 Fehlerbehoben
+
+- Push-to-Talk: Der erste Tastendruck nach jedem Verbinden brauchte spürbar
+  lange, weil das Mikro erst in diesem Moment angelegt und veröffentlicht
+  wurde. Das Overlay legt den Mikro-Track jetzt direkt beim Verbinden an
+  (stummgeschaltet) — Push-to-Talk reagiert danach sofort.
+- Entomben zeigte nur den Wachstums-Reset. Die Elder-Stufe kam nirgends im
+  Overlay an. Die Detailansicht zeigt jetzt „Elder-Stufe X/3" inklusive
+  Badge und Mutationsslots, direkt nach dem Entomben.
+- Perfekte Ernährung (Prime) hatte mit 90 % eine Schwelle, die im normalen
+  Spiel kaum zu halten war. Auf 70 % gesenkt.
+
+### 🔧 Sonstiges
+
+- Admin → Dino-Token: Der Mutations-Bereich zeigt jetzt einen Hinweis, dass
+  ausgewählte Mutationen nur gespeichert, aber nicht live auf den Dino
+  übertragen werden (Absturzrisiko im Server-Mod).
+
 ## v1.11.51 — Prime-Bedingung „Perfekte Ernährung"
 
 ### 🐛 Fehlerbehoben
