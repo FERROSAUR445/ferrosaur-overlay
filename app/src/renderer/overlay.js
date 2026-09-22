@@ -5172,7 +5172,7 @@ const PRIME_LABELS = [
 // Bedingungen, die das Spiel automatisch erfüllt (kein aktives Zutun nötig) → als „auto" markiert.
 const PRIME_AUTO = new Set([6, 7, 9]);
 // Zwischenschritt-Hinweise pro Bedingung (da echte Teil-Zähler nicht in den Daten stehen).
-const PRIME_HINT = { 2: '1% je Makronährstoff', 4: '2 verschiedene Zonen', 5: '4 verschiedene Zonen' };
+const PRIME_HINT = { 2: 'alle Nährstoffe deiner Diät ≥ 90%', 4: '2 verschiedene Zonen', 5: '4 verschiedene Zonen' };
 let prevPrimes = null;
 let primeDino = null;   // Dino, für den prevPrimes gilt — bei Wechsel neu baselinen
 // Prüft auf neu erfüllte Prime-Bedingungen und meldet sie per Toast.

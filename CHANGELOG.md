@@ -7,6 +7,16 @@
 
 ## [Unreleased]
 
+## v1.11.51 — Prime-Bedingung „Perfekte Ernährung"
+
+### 🐛 Fehlerbehoben
+
+- „Perfekte Ernährung" im Prime-Fortschritt wurde nie erfüllt, weil sie
+  nicht getrackt wurde. Jetzt zählt sie, sobald alle für die Diät eines
+  Dinos nötigen Nährstoffe (Karnivoren: Protein + Fett, Herbivoren:
+  Kohlenhydrate, Allesfresser: alle drei) gleichzeitig bei mindestens
+  90 % liegen.
+
 ## v1.11.50 — Zombie-Look im Skin-Menü
 
 ### ✨ Neu
