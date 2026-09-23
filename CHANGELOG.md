@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.60 — Waben-Vergrößerung zurückgenommen
+
+### 🎨 Sonstiges
+
+- Die Vergrößerung von Essen/Ausdauer/Durst aus v1.11.59 war nicht gewünscht -
+  alle HUD-Waben sind wieder einheitlich groß wie zuvor.
+
 ## v1.11.59 — Essen/Ausdauer/Durst-Waben vergrößert
 
 ### 🎨 Sonstiges
