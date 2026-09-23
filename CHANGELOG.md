@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.59 — Essen/Ausdauer/Durst-Waben vergrößert
+
+### 🎨 Sonstiges
+
+- Die drei Waben für Essen, Ausdauer und Durst sind jetzt etwas größer als die
+  restlichen HUD-Waben (HP, Grow, Nährstoffe bleiben unverändert).
+
 ## v1.11.58 — Garage-Swap: wartende Wiederherstellung sichtbar
 
 ### 🐛 Fehlerbehoben
