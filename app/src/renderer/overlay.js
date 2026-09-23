@@ -3273,11 +3273,18 @@ let svEncEditId = null, svEncDraft = null;
 async function renderSvAi() {
   const box = el('svAiBody'); if (!box) return;
   box.innerHTML = '<div class="dt-muted">Lade…</div>';
+  let encounterSystem = true; // false = dieser Server hat kein Encounter-System (keine /admin/mod-ai/*-Routen)
   const [st, list, brain] = await Promise.all([
-    svApi('GET', '/admin/mod-ai/encounters/status').catch(() => ({})),
+    svApi('GET', '/admin/mod-ai/encounters/status').catch(() => { encounterSystem = false; return {}; }),
     svApi('GET', '/admin/mod-ai/encounters').catch(() => ({ encounters: [] })),
     svApi('GET', '/admin/mod-ai/encounters/brain').catch(() => null), // älterer Mod-Build → Zeile ausblenden
   ]);
+  if (!encounterSystem) {
+    box.innerHTML = aiSpawnBlockHTML('aiTab') + '<div class="dt-muted">Das Encounter-System (Wächter/Patrouillen) ist auf diesem Server nicht installiert. Hier kannst du einzelne KI-Dinos direkt spawnen.</div>';
+    { const b = el('aiTabSpawnBtn'); if (b) b.onclick = () => spawnAiDino('aiTab'); }
+    loadAiDinoSpecies('aiTab');
+    return;
+  }
   const enabled = !!(st.ai_encounters_enabled != null ? st.ai_encounters_enabled : st.enabled);
   const encs = list.encounters || [];
   const statusDot = (e) => e.enabled !== false ? '<span style="color:#22c55e">● aktiv</span>' : '<span style="color:var(--muted)">○ aus</span>';
@@ -7758,8 +7765,20 @@ async function toggleAiWildlifeSpawn() {
 }
 // KI-Dinos direkt spawnen (Admin, Tab Steuerung): Arten kommen vom Backend (/admin/ai/dino-species),
 // gespawnt wird ueber dem eigenen Charakter.
-async function loadAiDinoSpecies() {
-  const sel = el('aiDinoSpecies'), btn = el('aiDinoSpawnBtn'); if (!sel || !btn) return;
+// p = ID-Praefix: 'aiDino' = Tab Steuerung, 'aiTab' = Tab AI (beide gleichzeitig im DOM, IDs muessen verschieden sein).
+function aiSpawnBlockHTML(p) {
+  return `<div class="sec-title">🦖 KI-Dino spawnen</div>
+    <div class="dt-form" style="margin:6px 0 14px">
+      <div style="display:flex;gap:6px">
+        <select id="${p}Species" class="tm-input" style="flex:2"></select>
+        <input id="${p}Count" type="number" min="1" max="5" value="1" class="tm-input" style="flex:1" title="Anzahl (1–5)">
+      </div>
+      <button id="${p}SpawnBtn" style="width:100%;margin-top:8px" disabled>🦖 Bei mir spawnen</button>
+      <div class="dt-muted" style="margin-top:4px">Die KI erscheint direkt bei dir und verhält sich normal (Raubtiere greifen an). Bis zu 5 pro Klick, sie bleibt bis zum Server-Neustart.</div>
+    </div>`;
+}
+async function loadAiDinoSpecies(p = 'aiDino') {
+  const sel = el(p + 'Species'), btn = el(p + 'SpawnBtn'); if (!sel || !btn) return;
   try {
     const d = await svApi('GET', '/admin/ai/dino-species');
     sel.innerHTML = (d.species || []).map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
@@ -7767,9 +7786,9 @@ async function loadAiDinoSpecies() {
     btn.title = d.enabled ? '' : 'Auf dem Server nicht freigeschaltet';
   } catch (e) { btn.disabled = true; btn.title = e.message; }
 }
-async function spawnAiDino() {
-  const btn = el('aiDinoSpawnBtn'); const species = el('aiDinoSpecies').value; if (!species) return;
-  const count = Math.max(1, Math.min(5, parseInt(el('aiDinoCount').value, 10) || 1));
+async function spawnAiDino(p = 'aiDino') {
+  const btn = el(p + 'SpawnBtn'); const species = el(p + 'Species').value; if (!species) return;
+  const count = Math.max(1, Math.min(5, parseInt(el(p + 'Count').value, 10) || 1));
   btn.disabled = true;
   try { const d = await svApi('POST', '/admin/ai/spawn-dino', { species, count }); showToast(d.notice || '🦖 Gespawnt', 'success'); }
   catch (e) { showToast(e.message, 'error'); }

@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.65 — Admin-Tab „AI“ zeigt den KI-Dino-Spawn
+
+### 🐛 Fehlerbehoben
+
+- Der Tab „🤖 AI“ im Admin-Panel war auf Servern ohne Encounter-System leer und ohne Funktion (die
+  Encounter-Routen fehlen dort). Dort steht jetzt stattdessen der Block „🦖 KI-Dino spawnen“ (Art wählen,
+  Anzahl 1–5, „Bei mir spawnen“) mit einem Hinweis, dass das Encounter-System nicht installiert ist.
+
 ## v1.11.64 — KI-Dinos direkt spawnen
 
 ### ✨ Neu
