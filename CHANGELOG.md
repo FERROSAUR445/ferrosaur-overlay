@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.61 — Essen/Ausdauer/Durst: großes Icon statt Zahl
+
+### 🎨 Sonstiges
+
+- Essen, Ausdauer und Durst zeigen jetzt ein großes Icon in der Waben-Mitte
+  statt einer kleinen Prozentzahl mit winzigem Icon darunter, passend zum
+  gewünschten Referenz-Look.
+
 ## v1.11.60 — Waben-Vergrößerung zurückgenommen
 
 ### 🎨 Sonstiges
