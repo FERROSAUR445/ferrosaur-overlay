@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.54 — Teleport-Punkte-Liste, Kontrast erhöht
+
+### 🐛 Fehlerbehoben
+
+- Der Kasten pro Teleport-Punkt aus v1.11.53 war noch zu schwach zu erkennen.
+  Rahmen und Hintergrund sind jetzt deutlich kräftiger und der Abstand
+  zwischen den Einträgen größer, damit jeder Punkt klar als eigener Kasten
+  erkennbar ist.
+
 ## v1.11.53 — Teleport-Punkte-Liste
 
 ### 🐛 Fehlerbehoben
