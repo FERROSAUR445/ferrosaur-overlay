@@ -2091,7 +2091,7 @@ function renderTpList() {
     const cd = t.cooldownRemaining || 0;
     const water = !!t.water;
     const row = document.createElement('div');
-    row.style.cssText = `padding:6px 8px;margin-bottom:4px;border-radius:8px;cursor:pointer;border:1px solid ${hot ? 'var(--accent)' : (water ? 'rgba(56,189,248,0.55)' : 'transparent')};background:${hot ? 'rgba(var(--accent-rgb),0.20)' : (water ? 'rgba(56,189,248,0.13)' : 'rgba(255,255,255,0.04)')}`;
+    row.style.cssText = `padding:6px 8px;margin-bottom:6px;border-radius:8px;cursor:pointer;border:1px solid ${hot ? 'var(--accent)' : (water ? 'rgba(56,189,248,0.55)' : 'rgba(255,255,255,0.16)')};background:${hot ? 'rgba(var(--accent-rgb),0.20)' : (water ? 'rgba(56,189,248,0.13)' : 'rgba(255,255,255,0.07)')};box-shadow:0 1px 3px rgba(0,0,0,0.35)`;
     row.innerHTML =
       `<div style="display:flex;justify-content:space-between;gap:6px"><b>${water ? '💧 ' : ''}#${t.number} ${escapeHtml(t.name)}</b>` +
       `<span style="color:var(--muted)">${t.price > 0 ? t.price + ' Pkt' : 'gratis'}</span></div>` +

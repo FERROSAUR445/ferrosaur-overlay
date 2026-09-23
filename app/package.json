@@ -1,6 +1,6 @@
 {
   "name": "ferrosaur-overlay",
-  "version": "1.11.52",
+  "version": "1.11.53",
   "description": "Ferrosaur Overlay — Proximity Chat, Map & Minimap für The Isle",
   "author": "Ferrosaur",
   "main": "src/main.js",

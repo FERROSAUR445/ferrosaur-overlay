@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.53 — Teleport-Punkte-Liste
+
+### 🐛 Fehlerbehoben
+
+- Die Teleport-Punkte-Liste zeigte alle Einträge ohne sichtbaren Rahmen an —
+  sie wirkten optisch zu einem Block zusammengeklebt. Jeder Punkt hat jetzt
+  einen eigenen, deutlich sichtbaren Kasten (Rahmen, Hintergrund, Schatten),
+  auch ohne Hover.
+
 ## v1.11.52 — Push-to-Talk, Entomb-Rückmeldung, Admin-Mutationen
 
 ### 🐛 Fehlerbehoben
