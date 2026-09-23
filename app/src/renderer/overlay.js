@@ -2804,6 +2804,7 @@ function renderSrv() {
   }
   { const b = el('srvAnnounce'); if (b && !b._w) { b._w = 1; b.onclick = () => { const m = el('srvMsg').value.trim(); if (!m) { showToast('Nachricht eingeben', 'error'); return; } apiAction('/admin/server/announce', { message: m }, '📢 Ansage gesendet', () => { el('srvMsg').value = ''; }); }; } }
   { const b = el('srvWipe'); if (b && !b._w) { b._w = 1; b.onclick = () => svArmConfirm(b, 'Sicher? Kadaver leeren', () => apiAction('/admin/server/wipecorpses', {}, '🧹 Kadaver geleert', null)); } }
+  { const b = el('aiSpawnToggleBtn'); if (b && !b._w) { b._w = 1; b.onclick = () => toggleAiWildlifeSpawn(); } }
   { const b = el('srvStart'); if (b && !b._w) { b._w = 1; b.onclick = () => apiAction('/admin/server/control', { action: 'start' }, '▶️ Server-Start ausgelöst', srvLoadStatus); } }
   { const b = el('srvRestart'); if (b && !b._w) { b._w = 1; b.onclick = () => svArmConfirm(b, 'Sicher? Restart', () => apiAction('/admin/server/control', { action: 'restart' }, '🔁 Restart ausgelöst', srvLoadStatus)); } }
   { const b = el('srvStop'); if (b && !b._w) { b._w = 1; b.onclick = () => svArmConfirm(b, 'Sicher? Stop', () => apiAction('/admin/server/control', { action: 'stop' }, '⏹️ Stop ausgelöst', srvLoadStatus)); } }
@@ -2818,6 +2819,7 @@ function srvShowTab(t) {
   else if (t === 'players') renderSrvPlayers();
   else if (t === 'limits') svRenderClassLimits();
   else if (t === 'betrieb') srvRenderBetrieb();
+  else if (t === 'control') loadAiWildlifeSpawnStatus();
   bfScheduleFrameSync && bfScheduleFrameSync();
 }
 // 8s-Poll: nur Live-Tabs auffrischen. Limits/Steuerung bleiben stehen (kein Überschreiben von Eingaben).
@@ -7695,6 +7697,31 @@ const AI_SPECIES = ['carno','cerato','compy','deino','diablo','dilo','dryo','gal
 function populateAiSpecies() {
   const sel = el('aiSpecies'); if (!sel || sel.options.length) return;
   sel.innerHTML = AI_SPECIES.map((s) => `<option value="${s}">${s}</option>`).join('');
+}
+// KI-Dinos: nur der eingebaute Wildlife-Spawn-Schalter des Spiels (an/aus), kein gezieltes
+// Spawnen von Spezies/Ort - siehe Kommentar im Backend (server.js /admin/ai/wildlife-spawn).
+let aiWildlifeSpawnOn = null;
+function renderAiWildlifeSpawnBtn() {
+  const b = el('aiSpawnToggleBtn'); if (!b) return;
+  b.disabled = false;
+  if (aiWildlifeSpawnOn === null) { b.textContent = '❌ Status unbekannt'; return; }
+  b.textContent = aiWildlifeSpawnOn ? '🦖 KI-Dino-Spawn: AN — klicken zum Ausschalten' : '🦖 KI-Dino-Spawn: AUS — klicken zum Einschalten';
+  b.classList.toggle('secondary', !aiWildlifeSpawnOn);
+}
+async function loadAiWildlifeSpawnStatus() {
+  const b = el('aiSpawnToggleBtn'); if (b) { b.disabled = true; b.textContent = '… lädt …'; }
+  try { const d = await svApi('GET', '/admin/ai/wildlife-spawn'); aiWildlifeSpawnOn = !!d.on; }
+  catch (e) { aiWildlifeSpawnOn = null; if (b) { b.disabled = false; b.textContent = '❌ ' + e.message; return; } }
+  renderAiWildlifeSpawnBtn();
+}
+async function toggleAiWildlifeSpawn() {
+  const b = el('aiSpawnToggleBtn'); if (b) b.disabled = true;
+  try {
+    const d = await svApi('POST', '/admin/ai/wildlife-spawn', { on: !aiWildlifeSpawnOn });
+    aiWildlifeSpawnOn = !!d.on;
+    showToast(aiWildlifeSpawnOn ? '🦖 KI-Dino-Spawn eingeschaltet' : '🦖 KI-Dino-Spawn ausgeschaltet', 'success');
+    renderAiWildlifeSpawnBtn();
+  } catch (e) { showToast(e.message, 'error'); if (b) b.disabled = false; }
 }
 async function aiPost(path, body) {
   const res = await fetch(`${config.tokenBase}/admin/ai/${path}`, {

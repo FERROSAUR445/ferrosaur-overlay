@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.57 — KI-Dino-Spawn-Schalter
+
+### ✨ Neu
+
+- Neuer Schalter in Server-Steuerung → ⚙️ Steuerung: Admins können den
+  eingebauten Wildlife-Spawn des Spiels komplett an- oder ausschalten. Kein
+  gezieltes Spawnen einzelner Dinos (Spezies/Ort) - das würde eine bisher
+  ungetestete, riskantere Mod-Funktion brauchen.
+
 ## v1.11.56 — Ausparken-Button-Fix
 
 ### 🐛 Fehlerbehoben
