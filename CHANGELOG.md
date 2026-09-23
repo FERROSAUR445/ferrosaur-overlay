@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.62 — HP/Grow/Nährstoffe aus dem HUD entfernt
+
+### 🎨 Sonstiges
+
+- Auf Wunsch entfernt: die HP-, Grow- und die drei Nährstoff-Waben (α/β/γ)
+  sind aus der Lebensanzeige raus. Übrig bleiben Essen, Ausdauer und Durst.
+
 ## v1.11.61 — Essen/Ausdauer/Durst: großes Icon statt Zahl
 
 ### 🎨 Sonstiges
