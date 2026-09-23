@@ -1006,6 +1006,7 @@ async function init() {
   { const b = el('followToggleBtn'); if (b) b.onclick = () => admToggleFollow(); }
   { const b = el('svAnnounce'); if (b) b.onclick = () => { const m = el('svMsg').value.trim(); if (!m) { showToast('Nachricht eingeben', 'error'); return; } apiAction('/admin/server/announce', { message: m }, '📢 Ansage gesendet', () => { el('svMsg').value = ''; }); }; }
   { const b = el('dutyToggleBtn'); if (b) b.onclick = () => toggleDuty(); }
+  document.querySelectorAll('.pate-btn').forEach((b) => { b.onclick = () => setPateStatus(b.dataset.pate); });
   document.querySelectorAll('#adminTabs [data-atab]').forEach((b) => { b.onclick = () => showAdminTab(b.dataset.atab); });
   { const b = el('dtTabGive'); if (b) b.onclick = () => { dtTab = 'give'; renderDtTab(); }; }
   { const b = el('dtTabEdit'); if (b) b.onclick = () => { dtTab = 'edit'; renderDtTab(); }; }
@@ -4779,6 +4780,32 @@ function renderGroup() {
   const lv = el('ovLeave'); if (lv) lv.onclick = () => ovLeave();
 }
 
+// ── Paten-Status (Nest-Bot): nur sichtbar, wenn der Account eine Paten-Rolle hat ──
+const PATE_LABEL = { discord: '💬 Discord-Pate', ingame: '🦖 Ingame-Pate', abwesend: '💤 Voll abwesend' };
+function updatePateBtns(status) {
+  document.querySelectorAll('.pate-btn').forEach((b) => b.classList.toggle('secondary', b.dataset.pate !== status));
+}
+async function loadPateState() {
+  const blk = el('pateBlock'); if (!blk) return;
+  if (!sessionToken) { blk.style.display = 'none'; return; }
+  try {
+    const r = await fetch(`${config.tokenBase}/paten`, { headers: { Authorization: `Bearer ${sessionToken}` } });
+    if (!r.ok) { blk.style.display = 'none'; return; }
+    const d = await r.json();
+    blk.style.display = d.isPate ? '' : 'none';
+    updatePateBtns(d.myStatus);
+  } catch { blk.style.display = 'none'; }
+}
+async function setPateStatus(status) {
+  try {
+    const res = await fetch(`${config.tokenBase}/paten/status`, {
+      method: 'POST', headers: { Authorization: `Bearer ${sessionToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
+    });
+    const d = await res.json(); if (!res.ok) throw new Error(apiErr(d));
+    updatePateBtns(status);
+    showToast(`🪺 Paten-Status: ${PATE_LABEL[status]}`, 'success');
+  } catch (e) { showToast(e.message || 'Fehler', 'error'); }
+}
 async function loadOvGroup() {
   if (!sessionToken) return;
   try {
@@ -7496,6 +7523,7 @@ async function connectWithSession(session) {
     { const ds = el('dockServer'); if (ds) ds.style.display = isAdmin ? 'flex' : 'none'; }
     { const dsc = el('dockSrvCtl'); if (dsc) dsc.style.display = isAdmin ? 'flex' : 'none'; }
     if (isStaff) loadDutyState(); // Dienst-Status beim Start holen → Rand-Glow ohne Panel-Öffnen
+    loadPateState();
     // Tickets/Events/Overlay-Gruppe laden + periodisch (Benachrichtigungen)
     loadMyTickets(); loadMyEvents(); loadOvGroup();
     if (!loadMyTickets._t) loadMyTickets._t = setInterval(loadMyTickets, 20000);

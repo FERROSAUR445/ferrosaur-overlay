@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## v1.11.63 — Paten-Status im Overlay
+
+### 🎨 Sonstiges
+
+- Paten sehen in den Audio-Einstellungen einen neuen Block „Paten-Status“ und können sich als
+  Discord-Pate, Ingame-Pate oder voll abwesend eintragen. Neulinge werden nur Paten zugeteilt, die nicht abwesend sind.
+
 ## v1.11.62 — HP/Grow/Nährstoffe aus dem HUD entfernt
 
 ### 🎨 Sonstiges
