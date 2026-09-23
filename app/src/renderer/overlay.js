@@ -5869,9 +5869,11 @@ function showDinoDetail(card, ctx) {
       : `<button id="ddSellServer" class="secondary" style="width:100%;opacity:.55;cursor:not-allowed" disabled title="Verkauf erst ab ${minPct}% Wachstum — aktuell ${growPct}% (es fehlen ${minPct - growPct}%).">💰 An Server verkaufen (ab ${minPct}%)</button>`;
     const myDino = ((me && me.dino) || '').split('_')[0];
     const slotDino = (card.dinoClass || '').split('_')[0];
-    const sameSpecies = myDino && slotDino && myDino === slotDino;
-    // Ausparken (nur gleiche Spezies, aktueller Dino geht verloren) + Swapen (jede Spezies, tauscht)
-    const unparkBtn = sameSpecies ? `<button id="ddUnpark" style="width:100%">⬆️ Ausparken</button>` : '';
+    // Ausparken geht laut Backend, wenn man gerade KEINEN lebenden Dino hat (Spawn-Menue,
+    // haeufigster Fall) ODER schon dieselbe Spezies lebend spielt. Nur bei einer ANDEREN
+    // lebenden Spezies lehnt das Backend ab und verweist auf "Tauschen" - nur dann verstecken.
+    const canUnpark = !myDino || myDino === slotDino;
+    const unparkBtn = canUnpark ? `<button id="ddUnpark" style="width:100%">⬆️ Ausparken</button>` : '';
     // B-7: Swap-Cooldown sichtbar machen — Button sperren + Restzeit anzeigen, statt stumm zu scheitern.
     const swapCd = garageCooldowns.swap || 0;
     const swapBtn = swapCd > 0

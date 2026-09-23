@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.56 — Ausparken-Button-Fix
+
+### 🐛 Fehlerbehoben
+
+- Der "Ausparken"-Button in der Garage wurde nur angezeigt, wenn man gerade
+  lebend genau dieselbe Spezies spielte wie der gespeicherte Dino - der
+  häufigste Fall (tot / im Spawn-Menü, kein lebender Dino) zeigte den Button
+  gar nicht erst an. Er erscheint jetzt auch ohne lebenden Dino.
+
 ## v1.11.55 — Teleport-Punkte: Höhe korrigieren
 
 ### ✨ Neu
