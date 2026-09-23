@@ -5988,6 +5988,10 @@ async function loadGarage() {
     if (cd.park > 0) parts.push(`⏳ Einparken in ${fmtCd(cd.park)} wieder möglich`);
     if (cd.unpark > 0) parts.push(`⏳ Ausparken in ${fmtCd(cd.unpark)} wieder möglich`);
     if (cd.swap > 0) parts.push(`⏳ Swapen in ${fmtCd(cd.swap)} wieder möglich`); // B-7: Swap-Countdown sichtbar machen
+    // Nach Swap/Ausparken auf eine andere Spezies (Tod -> Spawn-Menü) muss GENAU diese Spezies gewählt
+    // werden, sonst wartet die Wiederherstellung unsichtbar im Hintergrund - das sah bisher wie ein
+    // kaputter Swap aus, obwohl der alte Dino sicher in der Garage lag. Jetzt sichtbar machen.
+    if (data.pendingRestore) parts.push(`⏳ <b>${escapeHtml(data.pendingRestore.dinoClass)}</b> wartet auf Wiederherstellung — spawne als ${escapeHtml(data.pendingRestore.dinoClass)}, um ihn zurückzuholen (er bleibt sicher in der Garage, falls du etwas anderes spielst).`);
     if (cdBox) { cdBox.style.display = parts.length ? 'block' : 'none'; cdBox.innerHTML = parts.join('<br>'); }
     const parkBtn = el('parkBtn');
     if (parkBtn) {

@@ -7,6 +7,16 @@
 
 ## [Unreleased]
 
+## v1.11.58 — Garage-Swap: wartende Wiederherstellung sichtbar
+
+### 🐛 Fehlerbehoben
+
+- Nach einem Swap/Ausparken auf eine andere Spezies (Tod → Spawn-Menü) musste
+  man exakt die richtige Spezies wählen, sonst wartete die Wiederherstellung
+  unsichtbar im Hintergrund - sah aus wie ein kaputter Swap, obwohl der alte
+  Dino sicher in der Garage lag. Die Garage zeigt jetzt an, welche Spezies
+  noch auf Wiederherstellung wartet.
+
 ## v1.11.57 — KI-Dino-Spawn-Schalter
 
 ### ✨ Neu
