@@ -207,7 +207,9 @@ body.bf-noblur .map-panel {
 #mapRight { display: flex; flex-direction: column; gap: 12px; width: 224px; flex: none; max-height: 76vh; }
 /* Map-Seitenpanels (liegen NEBEN der Karte, nicht darüber) */
 .map-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-size: 12px; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); }
-#tpList { width: 224px; flex: none; max-height: 76vh; overflow: auto; }
+#tpList { width: 224px; flex: none; max-height: 76vh; overflow-y: auto; overflow-x: hidden; }
+#tpListItems { display: flex; flex-direction: column; gap: 8px; }
+.tp-item { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; font-size: 12px; backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur); cursor: pointer; }
 #mapGroup { overflow: auto; }
 .map-viewbtn { display: block; width: 100%; text-align: left; padding: 8px 12px; margin: 0; background: var(--panel); border: 1px solid var(--border); color: #eee; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .map-viewbtn:hover { background: rgba(var(--accent-rgb),0.18); }

@@ -2084,14 +2084,15 @@ function setHoveredTp(id) {
 
 function renderTpList() {
   const box = el('tpListItems'); if (!box) return;
-  if (!teleports.length) { box.innerHTML = '<div style="color:var(--muted)">Keine Punkte.</div>'; return; }
+  if (!teleports.length) { box.innerHTML = '<div class="tp-item" style="color:var(--muted);cursor:default">Keine Punkte.</div>'; return; }
   box.innerHTML = '';
   for (const t of [...teleports].sort((a, b) => a.number - b.number)) {
     const hot = t.id === hoveredTp;
     const cd = t.cooldownRemaining || 0;
     const water = !!t.water;
     const row = document.createElement('div');
-    row.style.cssText = `padding:6px 8px;margin-bottom:4px;border-radius:8px;cursor:pointer;border:1px solid ${hot ? 'var(--accent)' : (water ? 'rgba(56,189,248,0.55)' : 'transparent')};background:${hot ? 'rgba(var(--accent-rgb),0.20)' : (water ? 'rgba(56,189,248,0.13)' : 'rgba(255,255,255,0.04)')}`;
+    row.className = 'tp-item';
+    row.style.cssText = `border-color:${hot ? 'var(--accent)' : (water ? 'rgba(56,189,248,0.55)' : 'var(--border)')};background:${hot ? 'rgba(var(--accent-rgb),0.20)' : (water ? 'rgba(56,189,248,0.13)' : 'var(--panel)')}${hot ? ';box-shadow:var(--glow)' : ''}`;
     row.innerHTML =
       `<div style="display:flex;justify-content:space-between;gap:6px"><b>${water ? '💧 ' : ''}#${t.number} ${escapeHtml(t.name)}</b>` +
       `<span style="color:var(--muted)">${t.price > 0 ? t.price + ' Pkt' : 'gratis'}</span></div>` +
