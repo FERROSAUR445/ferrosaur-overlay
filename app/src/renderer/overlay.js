@@ -2806,6 +2806,7 @@ function renderSrv() {
   { const b = el('srvAnnounce'); if (b && !b._w) { b._w = 1; b.onclick = () => { const m = el('srvMsg').value.trim(); if (!m) { showToast('Nachricht eingeben', 'error'); return; } apiAction('/admin/server/announce', { message: m }, '📢 Ansage gesendet', () => { el('srvMsg').value = ''; }); }; } }
   { const b = el('srvWipe'); if (b && !b._w) { b._w = 1; b.onclick = () => svArmConfirm(b, 'Sicher? Kadaver leeren', () => apiAction('/admin/server/wipecorpses', {}, '🧹 Kadaver geleert', null)); } }
   { const b = el('aiSpawnToggleBtn'); if (b && !b._w) { b._w = 1; b.onclick = () => toggleAiWildlifeSpawn(); } }
+  { const b = el('aiDinoSpawnBtn'); if (b && !b._w) { b._w = 1; b.onclick = () => spawnAiDino(); } }
   { const b = el('srvStart'); if (b && !b._w) { b._w = 1; b.onclick = () => apiAction('/admin/server/control', { action: 'start' }, '▶️ Server-Start ausgelöst', srvLoadStatus); } }
   { const b = el('srvRestart'); if (b && !b._w) { b._w = 1; b.onclick = () => svArmConfirm(b, 'Sicher? Restart', () => apiAction('/admin/server/control', { action: 'restart' }, '🔁 Restart ausgelöst', srvLoadStatus)); } }
   { const b = el('srvStop'); if (b && !b._w) { b._w = 1; b.onclick = () => svArmConfirm(b, 'Sicher? Stop', () => apiAction('/admin/server/control', { action: 'stop' }, '⏹️ Stop ausgelöst', srvLoadStatus)); } }
@@ -2820,7 +2821,7 @@ function srvShowTab(t) {
   else if (t === 'players') renderSrvPlayers();
   else if (t === 'limits') svRenderClassLimits();
   else if (t === 'betrieb') srvRenderBetrieb();
-  else if (t === 'control') loadAiWildlifeSpawnStatus();
+  else if (t === 'control') { loadAiWildlifeSpawnStatus(); loadAiDinoSpecies(); }
   bfScheduleFrameSync && bfScheduleFrameSync();
 }
 // 8s-Poll: nur Live-Tabs auffrischen. Limits/Steuerung bleiben stehen (kein Überschreiben von Eingaben).
@@ -7754,6 +7755,25 @@ async function toggleAiWildlifeSpawn() {
     showToast(aiWildlifeSpawnOn ? '🦖 KI-Dino-Spawn eingeschaltet' : '🦖 KI-Dino-Spawn ausgeschaltet', 'success');
     renderAiWildlifeSpawnBtn();
   } catch (e) { showToast(e.message, 'error'); if (b) b.disabled = false; }
+}
+// KI-Dinos direkt spawnen (Admin, Tab Steuerung): Arten kommen vom Backend (/admin/ai/dino-species),
+// gespawnt wird ueber dem eigenen Charakter.
+async function loadAiDinoSpecies() {
+  const sel = el('aiDinoSpecies'), btn = el('aiDinoSpawnBtn'); if (!sel || !btn) return;
+  try {
+    const d = await svApi('GET', '/admin/ai/dino-species');
+    sel.innerHTML = (d.species || []).map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+    btn.disabled = !d.enabled;
+    btn.title = d.enabled ? '' : 'Auf dem Server nicht freigeschaltet';
+  } catch (e) { btn.disabled = true; btn.title = e.message; }
+}
+async function spawnAiDino() {
+  const btn = el('aiDinoSpawnBtn'); const species = el('aiDinoSpecies').value; if (!species) return;
+  const count = Math.max(1, Math.min(5, parseInt(el('aiDinoCount').value, 10) || 1));
+  btn.disabled = true;
+  try { const d = await svApi('POST', '/admin/ai/spawn-dino', { species, count }); showToast(d.notice || '🦖 Gespawnt', 'success'); }
+  catch (e) { showToast(e.message, 'error'); }
+  finally { btn.disabled = false; }
 }
 async function aiPost(path, body) {
   const res = await fetch(`${config.tokenBase}/admin/ai/${path}`, {

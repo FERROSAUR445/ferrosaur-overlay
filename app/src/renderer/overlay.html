@@ -627,7 +627,17 @@
         <div class="dt-sec">🦖 KI-Dinos (Wildlife-Spawn)</div>
         <div class="dt-form" style="margin-bottom:18px">
           <button id="aiSpawnToggleBtn" class="secondary" style="width:100%" disabled>… lädt …</button>
-          <div class="dt-muted" style="margin-top:4px">Schaltet den eingebauten Wildlife-Spawn des Spiels komplett an/aus (kein gezieltes Spawnen einzelner Dinos).</div>
+          <div class="dt-muted" style="margin-top:4px">Schaltet den eingebauten Wildlife-Spawn des Spiels komplett an/aus. Einzelne KI-Dinos spawnst du direkt darunter.</div>
+        </div>
+
+        <div class="dt-sec">🦖 KI-Dino spawnen</div>
+        <div class="dt-form" style="margin-bottom:18px">
+          <div style="display:flex;gap:6px">
+            <select id="aiDinoSpecies" class="tm-input" style="flex:2"></select>
+            <input id="aiDinoCount" type="number" min="1" max="5" value="1" class="tm-input" style="flex:1" title="Anzahl (1–5)">
+          </div>
+          <button id="aiDinoSpawnBtn" style="width:100%;margin-top:8px" disabled>🦖 Bei mir spawnen</button>
+          <div class="dt-muted" style="margin-top:4px">Die KI erscheint direkt bei dir und verhält sich normal (Raubtiere greifen an). Bis zu 5 pro Klick, sie bleibt bis zum Server-Neustart.</div>
         </div>
 
         <div class="dt-sec" style="color:#f87171">⚙️ Server-Steuerung (gefährlich)</div>

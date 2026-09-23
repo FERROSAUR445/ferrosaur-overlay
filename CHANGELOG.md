@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+## v1.11.64 — KI-Dinos direkt spawnen
+
+### ✨ Neu
+
+- Admin → Server-Steuerung → ⚙️ Steuerung: neuer Block „🦖 KI-Dino spawnen“. Art auswählen, Anzahl (1–5)
+  eintragen, „Bei mir spawnen“ – die KI erscheint direkt bei dir und verhält sich normal. Sie bleibt bis
+  zum Server-Neustart.
+
 ## v1.11.63 — Paten-Status im Overlay
 
 ### 🎨 Sonstiges
