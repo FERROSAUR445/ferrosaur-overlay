@@ -3269,6 +3269,14 @@ async function renderSvWelt() {
 const SV_ARCHETYPES = ['territorial_guard', 'pack_hunter', 'herd', 'ambush', 'skittish_prey', 'scavenger', 'nomad', 'apex_solo'];
 const svArchOpts = (sel) => SV_ARCHETYPES.map((a) => `<option value="${a}"${a === sel ? ' selected' : ''}>${a}</option>`).join('');
 let svEncEditId = null, svEncDraft = null;
+// Einfacher Modus (Server ohne Verhaltens-Engine): Art per Auswahl aus der Liste des Backends, Patrouille/Brain
+// im Editor ausgeblendet, zusaetzlich ein "Spawnen"-Knopf pro Encounter.
+let svEncBasic = false, svEncSpeciesList = [];
+function svEncSpeciesField(attrs, value, style) {
+  if (!svEncBasic) return `<input ${attrs} style="${style}" value="${escapeHtml(value || '')}" placeholder="Spezies (BP_…)">`;
+  const opts = svEncSpeciesList.map((s) => `<option value="${escapeHtml(s)}"${s === value ? ' selected' : ''}>${escapeHtml(s)}</option>`).join('');
+  return `<select ${attrs} style="${style}">${opts}</select>`;
+}
 
 async function renderSvAi() {
   const box = el('svAiBody'); if (!box) return;
@@ -3285,6 +3293,7 @@ async function renderSvAi() {
     loadAiDinoSpecies('aiTab');
     return;
   }
+  svEncBasic = !!st.basic; svEncSpeciesList = Array.isArray(st.species) ? st.species : [];
   const enabled = !!(st.ai_encounters_enabled != null ? st.ai_encounters_enabled : st.enabled);
   const encs = list.encounters || [];
   const statusDot = (e) => e.enabled !== false ? '<span style="color:#22c55e">● aktiv</span>' : '<span style="color:var(--muted)">○ aus</span>';
@@ -3292,10 +3301,13 @@ async function renderSvAi() {
     <div style="display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:8px;padding:6px 10px;margin-bottom:6px">
       <div style="flex:1;min-width:0"><b>${escapeHtml(e.name || e.id)}</b><div class="dt-muted" style="font-size:12px">${escapeHtml(e.archetype || '')} · ${escapeHtml(e.species || '')} · ×${e.count || 1}</div></div>
       <div style="font-size:12px;white-space:nowrap">${statusDot(e)}</div>
+      ${svEncBasic ? `<button class="secondary sv-enc-spawn" data-eid="${escapeHtml(e.id)}" style="width:auto;padding:4px 12px">🦖 Spawnen</button>` : ''}
       <button class="secondary sv-enc-edit" data-eid="${escapeHtml(e.id)}" style="width:auto;padding:4px 12px">✏️ Bearbeiten</button>
     </div>`).join('') || '<div class="dt-muted">Keine Encounters angelegt.</div>';
   box.innerHTML = `
+    ${svEncBasic ? aiSpawnBlockHTML('aiTab') : ''}
     <div class="sec-title">🤖 AI-Encounters</div>
+    ${svEncBasic ? '<div class="dt-muted" style="margin:6px 0;font-size:12px">ℹ️ Einfacher Modus: Encounters spawnen bei jedem Server-Start (und per „🦖 Spawnen“) mit der normalen Spiel-KI an ihrem Spawnpunkt. Revier, Patrouille, Leine und Nachspawnen gibt es hier nicht. Bereits gespawnte KI bleibt bis zum nächsten Server-Neustart – auch nach Ändern oder Löschen.</div>' : ''}
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:8px 0 6px"><input id="svAiMaster" type="checkbox" ${enabled ? 'checked' : ''}> Encounter-System aktiv (Master-Schalter)</label>
     ${brain ? `<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:0 0 14px" title="Steuert Patrouille/Territorial/Rudel/Schlafen. Kill-Switch: aus = Dinos stehen nur (wie bisher).">
       <input id="svAiBrain" type="checkbox" ${brain.brainEnabled ? 'checked' : ''}> 🧠 Verhaltens-Engine aktiv
@@ -3307,7 +3319,7 @@ async function renderSvAi() {
     <div class="sec-title" style="margin-top:12px">➕ Neuer Encounter</div>
     <div class="dt-form" style="margin-top:6px">
       <label>Name</label><input id="svEncName" class="tm-input" placeholder="Rex-Wache Nord">
-      <label>Spezies (Blueprint, z. B. BP_Allosaurus_C)</label><input id="svEncSpecies" class="tm-input" placeholder="BP_Allosaurus_C">
+      <label>${svEncBasic ? 'Art' : 'Spezies (Blueprint, z. B. BP_Allosaurus_C)'}</label>${svEncBasic ? svEncSpeciesField('id="svEncSpecies" class="tm-input"', '', '') : '<input id="svEncSpecies" class="tm-input" placeholder="BP_Allosaurus_C">'}
       <div style="display:flex;gap:10px">
         <div style="flex:1"><label>Archetyp</label><select id="svEncArch" class="bf-select">${svArchOpts('territorial_guard')}</select></div>
         <div style="flex:1"><label>Anzahl (1–20)</label><input id="svEncCount" type="number" min="1" max="20" value="1" class="tm-input"></div>
@@ -3315,6 +3327,7 @@ async function renderSvAi() {
       <label style="display:flex;align-items:center;gap:8px;margin-top:6px"><input id="svEncAtMe" type="checkbox" checked> Spawnpunkt = meine Position</label>
     </div>
     <button id="svEncCreate" style="width:100%;margin-top:8px">➕ Encounter anlegen</button>`;
+  if (svEncBasic) { const sb = el('aiTabSpawnBtn'); if (sb) sb.onclick = () => spawnAiDino('aiTab'); loadAiDinoSpecies('aiTab'); }
   { const b = el('svAiBrain'); if (b) b.onchange = async () => {
     try { await svApi('POST', '/admin/mod-ai/encounters/brain', { enabled: b.checked }); showToast(b.checked ? '🧠 Verhaltens-Engine AN' : '🧠 Verhaltens-Engine AUS', 'success'); }
     catch (e) { b.checked = !b.checked; showToast(e.message, 'error'); }
@@ -3323,6 +3336,12 @@ async function renderSvAi() {
     try { await svApi('PATCH', '/admin/mod-ai/encounters/status', { ai_encounters_enabled: el('svAiMaster').checked }); showToast(el('svAiMaster').checked ? '🤖 AI-Encounters AN' : '🤖 AI-Encounters AUS', 'success'); }
     catch (e) { el('svAiMaster').checked = !el('svAiMaster').checked; showToast(e.message, 'error'); }
   };
+  box.querySelectorAll('.sv-enc-spawn').forEach((b) => b.onclick = async () => {
+    b.disabled = true;
+    try { const d = await svApi('POST', `/admin/mod-ai/encounters/${encodeURIComponent(b.dataset.eid)}/spawn`, {}); showToast(d.notice || '🦖 Gespawnt', 'success'); }
+    catch (e) { showToast(e.message, 'error'); }
+    finally { b.disabled = false; }
+  });
   box.querySelectorAll('.sv-enc-edit').forEach((b) => b.onclick = () => {
     const e = encs.find((x) => x.id === b.dataset.eid); if (!e) return;
     svEncEditId = e.id; svEncDraft = JSON.parse(JSON.stringify(e));
@@ -3383,7 +3402,7 @@ function renderEncEditor() {
           <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" class="ee-enabled" ${d.enabled !== false ? 'checked' : ''}> aktiv</label>
         </div>
         <div style="display:flex;gap:8px;margin-top:6px">
-          <input class="tm-input ee-species" style="flex:2" value="${escapeHtml(d.species || '')}" placeholder="Spezies (BP_…)">
+          ${svEncSpeciesField('class="tm-input ee-species"', d.species, 'flex:2')}
           <select class="bf-select ee-arch" style="flex:1">${svArchOpts(d.archetype)}</select>
           <input type="number" min="1" max="20" class="tm-input ee-count" style="width:64px" value="${d.count || 1}">
         </div>
@@ -3394,6 +3413,7 @@ function renderEncEditor() {
           <input type="number" class="tm-input ee-sz" style="flex:1" value="${sp.z || 0}" placeholder="z">
           <button class="secondary ee-spawn-me" style="width:auto;padding:6px 10px">📍 hier</button>
         </div>
+        <div style="${svEncBasic ? 'display:none' : ''}"><!-- Patrouille/Respawn/Brain: im einfachen Modus ausgeblendet, aber im DOM (die Handler darunter greifen darauf zu) -->
         <label style="margin-top:8px">Patrouillen-Pfad (${patrol.length} Punkte)</label>
         <div class="ee-patrol">${patrol.map((p, i) => `
           <div class="ee-pt" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
@@ -3426,6 +3446,7 @@ function renderEncEditor() {
           <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer"><input type="checkbox" class="ee-dayactive" ${!d.schedule || d.schedule.dayActive !== false ? 'checked' : ''}> ☀️ Tagaktiv (ruht nachts)</label>
           <span style="font-size:12px">😴 ab <input type="number" min="0" max="23" class="tm-input ee-sleepfrom" style="width:52px" value="${d.schedule && d.schedule.sleepFromHour != null ? d.schedule.sleepFromHour : 21}"> Uhr</span>
           <span style="font-size:12px">⏰ wach ab <input type="number" min="0" max="23" class="tm-input ee-wake" style="width:52px" value="${d.schedule && d.schedule.wakeHour != null ? d.schedule.wakeHour : 6}"> Uhr</span>
+        </div>
         </div>
       </div>
       <div style="display:flex;gap:6px;margin-top:10px">

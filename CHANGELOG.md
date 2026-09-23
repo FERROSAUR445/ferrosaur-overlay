@@ -7,6 +7,17 @@
 
 ## [Unreleased]
 
+## v1.11.66 — Encounter-System (einfache Variante)
+
+### ✨ Neu
+
+- Admin → 🤖 AI: Das Encounter-System funktioniert jetzt. Encounter anlegen (Art aus der Liste, Anzahl 1–20,
+  Spawnpunkt = deine Position), bearbeiten, löschen. Aktive Encounters spawnen automatisch bei jedem
+  Server-Start und per „🦖 Spawnen“ sofort, mit der normalen Spiel-KI. Direkt darüber steht weiterhin
+  „🦖 KI-Dino spawnen“ für einzelne Spawns bei dir.
+- Bewusst nicht enthalten: Revier/Leine, Patrouillen-Steuerung und Nachspawnen. Bereits gespawnte KI bleibt
+  bis zum nächsten Server-Neustart, auch nach Ändern oder Löschen des Encounters.
+
 ## v1.11.65 — Admin-Tab „AI“ zeigt den KI-Dino-Spawn
 
 ### 🐛 Fehlerbehoben
