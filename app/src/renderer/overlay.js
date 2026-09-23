@@ -3803,6 +3803,11 @@ function renderAdminTpList() {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:6px;padding:4px 0';
     row.innerHTML = `<span>${t.water ? '💧 ' : ''}#${t.number} ${escapeHtml(t.name)} <span style="color:var(--muted)">${t.price}P</span></span>`;
+    const fix = document.createElement('button');
+    fix.textContent = '📍'; fix.title = 'Höhe/Position auf meine aktuelle Position korrigieren';
+    fix.style.cssText = 'width:auto;padding:3px 8px';
+    fix.onclick = () => fixTpHeight(t);
+    row.appendChild(fix);
     const del = document.createElement('button');
     del.textContent = '🗑'; del.style.cssText = 'width:auto;padding:3px 8px';
     del.onclick = () => deleteTp(t);
@@ -3826,6 +3831,15 @@ async function createTp() {
     showToast(`📍 TP-Punkt "${name}"${water ? ' 💧' : ''} erstellt`, 'success');
     el('tpName').value = ''; el('tpPrice').value = ''; el('tpCooldown').value = '';
     if (el('tpWater')) el('tpWater').checked = false;
+    await loadTeleports();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function fixTpHeight(t) {
+  try {
+    const res = await fetch(`${config.tokenBase}/teleports/${t.id}/fix-height`, { method: 'POST', headers: { Authorization: `Bearer ${sessionToken}` } });
+    const d = await res.json(); if (!res.ok) throw new Error(apiErr(d));
+    showToast(`📍 #${t.number} ${t.name}: Position auf deinen aktuellen Standort korrigiert`, 'success');
     await loadTeleports();
   } catch (e) { showToast(e.message, 'error'); }
 }

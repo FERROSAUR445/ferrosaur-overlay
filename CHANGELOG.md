@@ -7,6 +7,16 @@
 
 ## [Unreleased]
 
+## v1.11.55 — Teleport-Punkte: Höhe korrigieren
+
+### ✨ Neu
+
+- Admins können in der Teleport-Verwaltung jetzt per Klick auf 📍 einen
+  bestehenden Teleport-Punkt auf die eigene aktuelle Position (X/Y/Z)
+  korrigieren, statt ihn löschen und neu anlegen zu müssen. Praktisch für
+  Punkte, deren Höhe beim Anlegen ungenau war und die deshalb beim
+  Teleportieren einen spürbaren Fall verursacht haben.
+
 ## v1.11.54 — Teleport-Punkte-Liste, Kontrast erhöht
 
 ### 🐛 Fehlerbehoben
