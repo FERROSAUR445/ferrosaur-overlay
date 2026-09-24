@@ -1,8 +1,8 @@
 # Ferrosaur Overlay
 
-A free, open-source desktop overlay for **The Isle: Evrima**, built by the Ferrosaur community server.
+A free, open-source desktop overlay for **The Isle: Evrima**, used by the Ferrosaur community server.
 
-Ferrosaur, created by **FERROSAUR445**.
+**Basiert auf dem Overlay von Hideki Sensei (github.com/HidekiSensei), angepasst von Ferrosaur.**
 
 ## Features
 
@@ -26,6 +26,8 @@ Electron · LiveKit · Node.js · esbuild
 ## License
 
 [MIT](LICENSE) — free and open source. This software is **not** distributed commercially.
+
+Copyright (c) 2026 BlackFossil (original author: Hideki Sensei). The unchanged license text with the copyright notice is included in every distributed build (`LICENSE` in the installed app's `resources` folder, and under Settings → Software in the app).
 
 ## Downloads
 

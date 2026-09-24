@@ -7,6 +7,18 @@
 
 ## [Unreleased]
 
+## v1.11.67 — Urheber-Hinweis und Lizenz
+
+### 🔧 Sonstiges
+
+- Das Overlay basiert auf dem Overlay von Hideki Sensei
+  (github.com/HidekiSensei), angepasst von Ferrosaur. Der Hinweis steht jetzt
+  in README, Repo-Beschreibung und unter Einstellungen → Software.
+- Der unveränderte MIT-Lizenztext mit dem Copyright-Hinweis liegt jetzt jedem
+  Build bei (Ordner resources der installierten App) und ist in der App unter
+  Einstellungen → Software einsehbar. Aussagen, die Ferrosaur als Urheber
+  nennen, wurden entfernt.
+
 ## v1.11.66 — Encounter-System (einfache Variante)
 
 ### ✨ Neu

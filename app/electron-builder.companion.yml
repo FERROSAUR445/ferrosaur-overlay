@@ -9,6 +9,12 @@ npmRebuild: false
 directories:
   output: release-companion
 
+copyright: Copyright (c) 2026 BlackFossil (MIT License)
+
+extraResources:
+  - from: ../LICENSE
+    to: LICENSE
+
 extraMetadata:
   main: src/companion-main.js
 

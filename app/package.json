@@ -1,8 +1,9 @@
 {
   "name": "ferrosaur-overlay",
-  "version": "1.11.66",
+  "version": "1.11.67",
   "description": "Ferrosaur Overlay — Proximity Chat, Map & Minimap für The Isle",
-  "author": "Ferrosaur",
+  "author": "Hideki Sensei (original), angepasst von Ferrosaur",
+  "license": "MIT",
   "main": "src/main.js",
   "scripts": {
     "build:renderer": "esbuild src/renderer/login.js src/renderer/overlay.js src/renderer/companion.js --bundle --outdir=src/renderer/dist --format=iife --platform=browser",
@@ -26,6 +27,10 @@
   },
   "build": {
     "appId": "de.ferrosaur.overlay.test",
+    "copyright": "Copyright (c) 2026 BlackFossil (MIT License)",
+    "extraResources": [
+      { "from": "../LICENSE", "to": "LICENSE" }
+    ],
     "productName": "Ferrosaur Overlay Test",
     "artifactName": "Ferrosaur-Overlay-Test-Setup.${ext}",
     "npmRebuild": false,
