@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## v1.11.68 — Neue Karte: V10.2 Gateway Map
+
+### ✨ Neu
+
+- Die Karte im Overlay und in der Companion ist jetzt die aktuelle **V10.2 Gateway Map (Stand 26.09.2026)** von
+  RaidAtlas — schärfer und mit den neuen Geländedetails. Der Kartenausschnitt ist unverändert, alle Positionen,
+  Zonen und Teleport-Punkte sitzen weiterhin an der richtigen Stelle.
+- RaidAtlas-Logo (Karten-Hinweis unten rechts) auf die neue Fassung aktualisiert.
+
 ## v1.11.67 — Urheber-Hinweis und Lizenz
 
 ### 🔧 Sonstiges
